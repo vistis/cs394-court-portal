@@ -1,0 +1,49 @@
+app:
+  sql:
+    host: ${SQL_HOST:localhost}
+    port: ${SQL_PORT:5432}
+    database: ${SQL_DATABASE:court}
+    user: ${SQL_USER:court}
+    password: ${SQL_PASSWORD:}
+
+spring:
+  application:
+    name: court-portal
+
+  datasource:
+    url: jdbc:postgresql://${app.sql.host}:${app.sql.port}/${app.sql.database}
+    username: ${app.sql.user}
+    password: ${app.sql.password}
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+  flyway:
+    enabled: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    url: ${spring.datasource.url}
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+
+  data:
+    mongodb:
+      host: ${MONGODB_HOST:localhost}
+      port: ${MONGODB_PORT:27017}
+      database: ${MONGODB_DATABASE:court}
+      username: ${MONGODB_USER:}
+      password: ${MONGODB_PASSWORD:}
+
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  storage:
+    s3:
+      access-key: ${S3_ACCESS_KEY:}
+      secret-key: ${S3_SECRET_KEY:}
+      endpoint: ${S3_ENDPOINT:}
+      region: ${S3_REGION:us-east-1}
+      bucket-name: ${S3_BUCKET_NAME:}
+      public-url: ${S3_PUBLIC_URL:}
