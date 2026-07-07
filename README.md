@@ -24,6 +24,7 @@ The internal court for the Court Management System. Used for by Greffier users. 
 - Lombok
 - Spring Boot DevTools
 - Spring Session for Spring Data Redis
+- Sping dotenv (by `me.paulschwarz`, version `5.1.0`)
 
 > And additionally inherited dependencies from `court-shared`.
 

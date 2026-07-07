@@ -1,43 +1,28 @@
-app:
-  sql:
-    host: ${SQL_HOST:localhost}
-    port: ${SQL_PORT:5432}
-    database: ${SQL_DATABASE:court}
-    user: ${SQL_USER:court}
-    password: ${SQL_PASSWORD:}
-
 spring:
   application:
     name: court-portal
 
   datasource:
-    url: jdbc:postgresql://${app.sql.host}:${app.sql.port}/${app.sql.database}
-    username: ${app.sql.user}
-    password: ${app.sql.password}
+    url: ${SQL_URL:"jdbc:postgresql://localhost:5432/court"}
+    username: ${SQL_USER:court}
+    password: ${SQL_PASSWORD:}
 
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: none
 
-  flyway:
-    enabled: false
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    url: ${spring.datasource.url}
-    user: ${spring.datasource.username}
-    password: ${spring.datasource.password}
-
   data:
     mongodb:
-      host: ${MONGODB_HOST:localhost}
-      port: ${MONGODB_PORT:27017}
+      uri: ${MONGODB_URI:"mongodb://localhost:27017/"}
       database: ${MONGODB_DATABASE:court}
-      username: ${MONGODB_USER:}
-      password: ${MONGODB_PASSWORD:}
 
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+
+  flyway:
+    enabled: false
 
   storage:
     s3:
