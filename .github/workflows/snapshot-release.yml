@@ -1,0 +1,89 @@
+name: Build and Release based on Latest Commit
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+      
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout court-portal repository
+      uses: actions/checkout@v7
+      
+    - name: Checkout court-shared repository
+      uses: actions/checkout@v7
+      with:
+        repository: vistis/cs394-court-shared
+        path: court-shared/
+        token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+        
+    - name: Set up Java
+      uses: actions/setup-java@v5
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Install court-shared
+      run: |
+        cd court-shared
+        mvn clean install -DskipTests
+        cd ..
+
+    - name: Build with Maven
+      run: mvn clean package -DskipTests
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: court-portal-jar
+        path: ./target/*.jar
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout court-portal repository
+        uses: actions/checkout@v7
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: court-portal-jar
+          path: jar/
+
+      - name: Remove the old Release
+        run: |
+          gh release delete snapshot --yes || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release new Artifacts
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: "jar/*"
+          name: "Snapshot Builds"
+          body: |
+            ## Snapshot Builds
+            
+            **Build:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            **Commit:** [`${{ github.sha }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Branch:** ${{ github.ref_name }}
+            
+            This is an automated snapshot built from the latest main branch.
+          prerelease: true
+          replacesArtifacts: false
+          allowUpdate: false
+          tag: snapshot
