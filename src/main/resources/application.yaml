@@ -1,9 +1,12 @@
+server:
+  port: ${SERVER_PORT:8080}
+
 spring:
   application:
     name: court-portal
 
   datasource:
-    url: ${SQL_URL:"jdbc:postgresql://localhost:5432/court"}
+    url: ${SQL_URL:jdbc:postgresql://localhost:5432/court}
     username: ${SQL_USER:court}
     password: ${SQL_PASSWORD:}
 
@@ -11,10 +14,13 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: none
+    properties:
+      hibernate:
+        dialect: ${SQL_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
 
   data:
     mongodb:
-      uri: ${MONGODB_URI:"mongodb://localhost:27017/"}
+      uri: ${MONGODB_URI:mongodb://localhost:27017/}
       database: ${MONGODB_DATABASE:court}
 
     redis:
