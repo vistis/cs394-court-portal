@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Court Panel — Login</title>
+    <link rel="stylesheet" th:href="@{/css/login.css}" />
+  </head>
+  <body>
+    <div class="login-layout">
+      <!-- Left branding panel (desktop only) -->
+      <aside class="brand-panel">
+        <div class="brand-bg" aria-hidden="true">
+          <img th:src="@{/images/login/pillar-bg.png}" alt="" />
+        </div>
+        <div class="brand-content">
+          <div class="brand-logo-row">
+            <img
+              class="brand-logo"
+              th:src="@{/images/login/brand-logo.svg}"
+              alt=""
+            />
+            <span class="brand-name">Court Panel</span>
+          </div>
+          <div class="brand-copy">
+            <h1 class="brand-heading">
+              Upholding the Integrity of Judicial Operations.
+            </h1>
+            <p class="brand-desc">
+              Access the secure CMS portal for docket management, hearing
+              schedules, and case disposition tracking. Our system ensures
+              absolute transparency and efficiency for the high court.
+            </p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right login section -->
+      <main class="login-section">
+        <div class="login-card-wrap">
+          <div class="login-card">
+            <header class="card-header">
+              <img
+                class="card-logo"
+                th:src="@{/images/login/card-logo.svg}"
+                alt="Court Panel logo"
+              />
+              <h2 class="card-title">Court Panel</h2>
+              <p class="card-subtitle">Judicial Management System</p>
+            </header>
+
+            <form class="login-form" th:action="@{/login}" method="post">
+              <div
+                th:if="${param.error}"
+                class="form-alert form-alert--error"
+                role="alert"
+              >
+                Invalid email or password. Please try again.
+              </div>
+              <div
+                th:if="${param.logout}"
+                class="form-alert form-alert--info"
+                role="status"
+              >
+                You have been signed out.
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="email">Email</label>
+                <div class="input-wrap">
+                  <img
+                    class="input-icon input-icon--left"
+                    th:src="@{/images/login/icon-email.svg}"
+                    alt=""
+                  />
+                  <input
+                    class="input"
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="e.g. j.doe@court.gov"
+                    autocomplete="username"
+                    required
+                    autofocus
+                  />
+                </div>
+              </div>
+
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label" for="password">Password</label>
+                  <a class="link-forgot" href="#">Forgot Password?</a>
+                </div>
+                <div class="input-wrap">
+                  <img
+                    class="input-icon input-icon--left"
+                    th:src="@{/images/login/icon-lock.svg}"
+                    alt=""
+                  />
+                  <input
+                    class="input input--password"
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="••••••••"
+                    autocomplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="pw-toggle"
+                    id="pwToggle"
+                    aria-label="Show password"
+                  >
+                    <img th:src="@{/images/login/icon-eye.svg}" alt="" />
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-login">
+                <span>Login</span>
+                <img th:src="@{/images/login/icon-arrow.svg}" alt="" />
+              </button>
+            </form>
+
+            <footer class="card-footer">
+              <p>
+                Authorized personnel only. All access is logged and monitored
+                for judicial compliance.
+              </p>
+            </footer>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var toggle = document.getElementById('pwToggle');
+        var pw = document.getElementById('password');
+        if (toggle && pw) {
+          toggle.addEventListener('click', function () {
+            var show = pw.type === 'password';
+            pw.type = show ? 'text' : 'password';
+            toggle.setAttribute(
+              'aria-label',
+              show ? 'Hide password' : 'Show password'
+            );
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

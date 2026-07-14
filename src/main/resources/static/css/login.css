@@ -1,0 +1,343 @@
+:root {
+  --brand-dark-1: #131b2e;
+  --brand-dark-2: #1e293b;
+  --surface: #f7f9fb;
+  --card: #ffffff;
+  --border: #c6c6cd;
+  --text-strong: #191c1e;
+  --text: #45464d;
+  --text-muted: #6b7280;
+  --accent: #4059aa;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+.login-layout {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+/* ---------- Left branding panel ---------- */
+.brand-panel {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    var(--brand-dark-1) 0%,
+    var(--brand-dark-2) 100%
+  );
+}
+
+.brand-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.brand-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brand-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.brand-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 27px;
+  height: 28.5px;
+}
+
+.brand-name {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  color: #fff;
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 22.75px;
+  max-width: 448px;
+}
+
+.brand-heading {
+  margin: 0;
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 700;
+  letter-spacing: -0.64px;
+  color: #fff;
+}
+
+.brand-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 22.75px;
+  color: rgba(218, 226, 253, 0.7);
+}
+
+/* ---------- Right login section ---------- */
+.login-section {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--surface);
+}
+
+.login-card-wrap {
+  width: 100%;
+  max-width: 440px;
+}
+
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 41px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Card header */
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.card-logo {
+  width: 40px;
+  height: 38px;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  margin: 0 0 4px;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 800;
+  letter-spacing: -0.24px;
+  color: var(--text-strong);
+}
+
+.card-subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text);
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text);
+}
+
+.link-forgot {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.link-forgot:hover {
+  text-decoration: underline;
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+}
+
+.input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-strong);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 17px 15px 41px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input--password {
+  padding-right: 49px;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:focus {
+  border-color: var(--brand-dark-2);
+  box-shadow: 0 0 0 3px rgba(64, 89, 170, 0.15);
+}
+
+.input-icon--left {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pw-toggle img {
+  width: 22px;
+  height: 15px;
+  display: block;
+}
+
+/* Login button */
+.btn-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 4px;
+  background: var(--brand-dark-1);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-login:hover {
+  background: #0e1626;
+}
+
+.btn-login img {
+  width: 10.5px;
+  height: 10.5px;
+}
+
+/* Alerts */
+.form-alert {
+  font-size: 13px;
+  line-height: 18px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.form-alert--error {
+  color: #b42318;
+  background: #fef3f2;
+  border-color: #fda29b;
+}
+
+.form-alert--info {
+  color: #175cd3;
+  background: #eff8ff;
+  border-color: #b2ddff;
+}
+
+/* Card footer */
+.card-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 33px;
+  text-align: center;
+}
+
+.card-footer p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--text);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 880px) {
+  .brand-panel {
+    display: none;
+  }
+}
