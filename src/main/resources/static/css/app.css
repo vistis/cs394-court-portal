@@ -251,7 +251,7 @@ body {
 }
 
 .toolbar-grid--bottom {
-  grid-template-columns: 256px 1fr;
+  grid-template-columns: minmax(300px, 340px) 1fr;
 }
 
 .field {
@@ -327,6 +327,13 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+}
+
+/* Let the two date inputs share the field width instead of overflowing. */
+.date-range .input {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .date-sep {
