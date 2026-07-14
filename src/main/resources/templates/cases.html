@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cases Directory — Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content">
+        <!-- Page header -->
+        <div class="page-header">
+          <div class="page-heading">
+            <h1 class="page-title">Cases Directory</h1>
+            <p class="page-subtitle">Search and manage all court records</p>
+          </div>
+          <a href="#" class="btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Open New Case</span>
+          </a>
+        </div>
+
+        <!-- Filter &amp; search toolbar -->
+        <form class="toolbar" method="get" th:action="@{/cases}">
+          <div class="toolbar-grid">
+            <div class="field field--search">
+              <label class="field-label">Search</label>
+              <div class="input-wrap">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                <input
+                  class="input"
+                  type="text"
+                  name="q"
+                  th:value="${q}"
+                  placeholder="Search by Case Number or Title..."
+                />
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-label">Classification</label>
+              <select class="select" name="classification">
+                <option value="">All</option>
+                <option
+                  th:each="c : ${classifications}"
+                  th:value="${c.classificationId}"
+                  th:text="${c.name}"
+                  th:selected="${selectedClassification != null and selectedClassification == c.classificationId}"
+                ></option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="field-label">Status</label>
+              <select class="select" name="status">
+                <option value="">All</option>
+                <option
+                  th:each="s : ${statuses}"
+                  th:value="${s.statusId}"
+                  th:text="${s.name}"
+                  th:selected="${selectedStatus != null and selectedStatus == s.statusId}"
+                ></option>
+              </select>
+            </div>
+          </div>
+
+          <div class="toolbar-grid toolbar-grid--bottom">
+            <div class="field field--date">
+              <label class="field-label">Filed Date</label>
+              <div class="date-range">
+                <input class="input" type="date" name="from" th:value="${from}" />
+                <span class="date-sep">–</span>
+                <input class="input" type="date" name="to" th:value="${to}" />
+              </div>
+            </div>
+            <div class="toolbar-actions">
+              <button type="submit" class="btn-secondary">Search</button>
+              <a th:href="@{/cases}" class="btn-link">Clear Filters</a>
+            </div>
+          </div>
+        </form>
+
+        <!-- Results table -->
+        <div class="table-card">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Case Number</th>
+                  <th>Title</th>
+                  <th>Classification</th>
+                  <th>Status</th>
+                  <th>Filed Date</th>
+                  <th>Assigned Judge</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${page.content}">
+                  <td>
+                    <a href="#" class="cell-link" th:text="${row.caseNumber}">CR-0000</a>
+                  </td>
+                  <td th:text="${row.title}">Title</td>
+                  <td th:text="${row.classification}">Classification</td>
+                  <td>
+                    <span
+                      class="badge"
+                      th:classappend="${row.badgeClass}"
+                      th:text="${row.status}"
+                      >Status</span
+                    >
+                  </td>
+                  <td class="muted" th:text="${row.filedDate}">Date</td>
+                  <td th:text="${row.assignedJudge}">Judge</td>
+                </tr>
+                <tr th:if="${page.empty}">
+                  <td colspan="6" class="table-empty">
+                    No cases match your filters.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <span
+              class="pagination-info"
+              th:text="|Page ${page.number + 1} of ${page.totalPages == 0 ? 1 : page.totalPages}|"
+              >Page 1 of 1</span
+            >
+            <div class="pagination-btns">
+              <a
+                class="page-btn"
+                th:classappend="${page.first} ? 'page-btn--disabled' : ''"
+                th:href="${page.first} ? '#' : @{/cases(q=${q},classification=${selectedClassification},status=${selectedStatus},from=${from},to=${to},page=${page.number - 1})}"
+                >&lt; Previous</a
+              >
+              <a
+                class="page-btn"
+                th:classappend="${page.last} ? 'page-btn--disabled' : ''"
+                th:href="${page.last} ? '#' : @{/cases(q=${q},classification=${selectedClassification},status=${selectedStatus},from=${from},to=${to},page=${page.number + 1})}"
+                >Next &gt;</a
+              >
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
