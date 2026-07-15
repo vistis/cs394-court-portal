@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Case Not Found - Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--form">
+        <div class="empty-state">
+          <h1 class="page-title">Case not found</h1>
+          <p class="page-subtitle">
+            The case may have been removed, or the link may be incorrect.
+          </p>
+          <a th:href="@{/cases}" class="btn-primary">Back to Cases</a>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

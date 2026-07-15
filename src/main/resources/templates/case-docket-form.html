@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Add Docket Entry - ${caseDetail.caseNumber}|">
+      Add Docket Entry - Court Panel
+    </title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app app--modal-open">
+    <div th:replace="~{case-docket :: docketPageContent}"></div>
+
+    <div class="modal-scrim" aria-hidden="true"></div>
+
+    <section
+      class="docket-modal"
+      role="dialog"
+      aria-labelledby="docketModalTitle"
+      aria-modal="true"
+    >
+      <div class="docket-modal-warning">
+        <span>i</span>
+        Docket entries cannot be deleted once submitted.
+      </div>
+
+      <div class="status-modal-head">
+        <div>
+          <h1 id="docketModalTitle" class="status-modal-title">
+            Add Docket Entry
+          </h1>
+          <p
+            class="status-modal-subtitle"
+            th:text="|Case ${caseDetail.caseNumber}|"
+          >
+            Case CMS-2026-0001
+          </p>
+        </div>
+        <a
+          class="modal-close"
+          th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}"
+          aria-label="Close"
+          >×</a
+        >
+      </div>
+
+      <form
+        class="status-modal-form"
+        method="post"
+        th:action="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}"
+        th:object="${createDocketEntryForm}"
+      >
+        <div
+          class="alert alert--error"
+          th:if="${#fields.hasGlobalErrors()}"
+          th:each="err : ${#fields.globalErrors()}"
+          th:text="${err}"
+        >
+          Unable to add docket entry.
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="activityType">Activity Type *</label>
+          <select class="select" id="activityType" th:field="*{activityType}">
+            <option value="">Select activity type...</option>
+            <option
+              th:each="type : ${activityTypes}"
+              th:value="${type.code}"
+              th:text="${type.label}"
+            ></option>
+          </select>
+          <div
+            class="field-error"
+            th:if="${#fields.hasErrors('activityType')}"
+            th:errors="*{activityType}"
+          >
+            Activity type error
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-row-label">
+            <label class="field-label" for="description">Description *</label>
+            <span class="field-hint">
+              This entry will become part of the official case record.
+            </span>
+          </div>
+          <textarea
+            class="input textarea docket-description"
+            id="description"
+            th:field="*{description}"
+            placeholder="Describe the legally significant event..."
+          ></textarea>
+          <div
+            class="field-error"
+            th:if="${#fields.hasErrors('description')}"
+            th:errors="*{description}"
+          >
+            Description error
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label class="field-label" for="performedBy">Performed By</label>
+            <input
+              class="input input--readonly"
+              id="performedBy"
+              type="text"
+              readonly
+              th:value="${performedByDisplay}"
+            />
+          </div>
+          <div class="field">
+            <label class="field-label" for="timestamp">Timestamp</label>
+            <input
+              class="input input--readonly"
+              id="timestamp"
+              type="text"
+              readonly
+              th:value="${entryTimestampDisplay}"
+            />
+            <span class="field-hint">
+              Entry will be recorded at current date and time
+            </span>
+          </div>
+        </div>
+
+        <div class="status-modal-actions">
+          <a
+            th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}"
+            class="btn-link"
+            >Cancel</a
+          >
+          <button
+            class="btn-primary"
+            type="submit"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+          >
+            Add Entry
+          </button>
+        </div>
+      </form>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|${caseDetail.caseNumber} - Court Panel|">
+      Case Detail - Court Panel
+    </title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <div
+          class="alert alert--success"
+          th:if="${successMessage}"
+          th:text="${successMessage}"
+        >
+          Case status updated successfully.
+        </div>
+
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+        </div>
+
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <div class="detail-chips">
+              <span
+                class="badge badge--red"
+                th:text="${caseDetail.classification}"
+                >Criminal</span
+              >
+              <span
+                class="badge"
+                th:classappend="${caseDetail.badgeClass}"
+                th:text="${caseDetail.status}"
+                >Open</span
+              >
+              <span class="badge badge--slate" th:text="${caseDetail.visibility}">
+                Internal
+              </span>
+            </div>
+
+            <h1
+              class="detail-title"
+              th:text="|${caseDetail.caseNumber}: ${caseDetail.title}|"
+            >
+              CMS-2026-0001: Case Title
+            </h1>
+
+            <div class="detail-meta">
+              <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+              <span th:if="${caseDetail.filedDate != ''}">
+                Filed <span th:text="${caseDetail.filedDate}">Jan 01, 2026</span>
+              </span>
+              <span th:if="${caseDetail.lastUpdatedDate != ''}">
+                Updated
+                <span th:text="${caseDetail.lastUpdatedDate}">Jan 02, 2026</span>
+              </span>
+            </div>
+          </div>
+
+          <a
+            class="btn-outline"
+            th:href="@{/cases/{caseId}/status(caseId=${caseDetail.caseId})}"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+          >
+            Update status
+          </a>
+        </section>
+
+        <nav class="detail-tabs" aria-label="Case sections">
+          <a class="detail-tab detail-tab--active" href="#">Overview</a>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}"
+            >Docket Sheet</a
+          >
+          <span class="detail-tab detail-tab--disabled">Documents</span>
+          <span class="detail-tab detail-tab--disabled">Hearings</span>
+          <span class="detail-tab detail-tab--disabled">Participants</span>
+          <span class="detail-tab detail-tab--disabled">Disposition</span>
+        </nav>
+
+        <div class="detail-grid">
+          <section class="detail-panel">
+            <h2 class="detail-panel-title">Case Summary</h2>
+            <p
+              class="detail-summary"
+              th:text="${caseDetail.description}"
+            >
+              Case description.
+            </p>
+
+            <dl class="detail-facts">
+              <div>
+                <dt>Case Number</dt>
+                <dd th:text="${caseDetail.caseNumber}">CMS-2026-0001</dd>
+              </div>
+              <div>
+                <dt>Classification</dt>
+                <dd th:text="${caseDetail.classification}">Criminal</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd th:text="${caseDetail.status}">Open</dd>
+              </div>
+              <div>
+                <dt>Filed Date</dt>
+                <dd th:text="${caseDetail.filedDate == '' ? 'Not recorded' : caseDetail.filedDate}">
+                  Jan 01, 2026
+                </dd>
+              </div>
+              <div>
+                <dt>Last Updated</dt>
+                <dd th:text="${caseDetail.lastUpdatedDate == '' ? 'Not recorded' : caseDetail.lastUpdatedDate}">
+                  Jan 02, 2026
+                </dd>
+              </div>
+              <div th:if="${caseDetail.closedDate != ''}">
+                <dt>Closed Date</dt>
+                <dd th:text="${caseDetail.closedDate}">Jan 03, 2026</dd>
+              </div>
+              <div>
+                <dt>Visibility</dt>
+                <dd th:text="${caseDetail.visibility}">Internal</dd>
+              </div>
+            </dl>
+          </section>
+
+          <aside class="detail-aside">
+            <section class="assignment-card">
+              <div class="assignment-card-head">
+                <h2 class="detail-panel-title">Assigned Judge</h2>
+                <span
+                  class="mini-action"
+                  sec:authorize="hasAuthority('CASE_ASSIGN')"
+                  >Assign</span
+                >
+              </div>
+              <div class="assignment-body">
+                <div class="assignment-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 19" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M0 19V17H9V5.825C8.56667 5.675 8.19167 5.44167 7.875 5.125C7.55833 4.80833 7.325 4.43333 7.175 4H4L7 11C7 11.8333 6.65833 12.5417 5.975 13.125C5.29167 13.7083 4.46667 14 3.5 14C2.53333 14 1.70833 13.7083 1.025 13.125C0.341667 12.5417 0 11.8333 0 11L3 4H1V2H7.175C7.375 1.41667 7.73333 0.9375 8.25 0.5625C8.76667 0.1875 9.35 0 10 0C10.65 0 11.2333 0.1875 11.75 0.5625C12.2667 0.9375 12.625 1.41667 12.825 2H19V4H17L20 11C20 11.8333 19.6583 12.5417 18.975 13.125C18.2917 13.7083 17.4667 14 16.5 14C15.5333 14 14.7083 13.7083 14.025 13.125C13.3417 12.5417 13 11.8333 13 11L16 4H12.825C12.675 4.43333 12.4417 4.80833 12.125 5.125C11.8083 5.44167 11.4333 5.675 11 5.825V17H20V19H0Z"/></svg>
+                </div>
+                <div>
+                  <div
+                    class="assignment-name"
+                    th:text="${caseDetail.assignedJudge.name}"
+                  >
+                    Hon. Judge Name
+                  </div>
+                  <div
+                    class="assignment-subtext"
+                    th:if="${caseDetail.assignedJudge.licenseNumber != ''}"
+                    th:text="${caseDetail.assignedJudge.licenseNumber}"
+                  >
+                    License
+                  </div>
+                  <div
+                    class="assignment-subtext"
+                    th:if="${caseDetail.assignedJudge.licenseNumber == ''}"
+                  >
+                    Presiding judge
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="assignment-card">
+              <div class="assignment-card-head">
+                <h2 class="detail-panel-title">Assigned Greffier</h2>
+                <span
+                  class="mini-action"
+                  sec:authorize="hasAuthority('CASE_ASSIGN')"
+                  >Manage</span
+                >
+              </div>
+              <div class="assignment-body">
+                <div class="assignment-icon">
+                  <svg width="21" height="20" viewBox="0 0 21 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 8C6.9 8 5.95833 7.60833 5.175 6.825C4.39167 6.04167 4 5.1 4 4C4 2.9 4.39167 1.95833 5.175 1.175C5.95833 0.391667 6.9 0 8 0C9.1 0 10.0417 0.391667 10.825 1.175C11.6083 1.95833 12 2.9 12 4C12 5.1 11.6083 6.04167 10.825 6.825C10.0417 7.60833 9.1 8 8 8ZM0 16V13.225C0 12.6583 0.141667 12.1333 0.425 11.65C0.708333 11.1667 1.1 10.8 1.6 10.55C2.45 10.1167 3.40833 9.75 4.475 9.45C5.54167 9.15 6.725 9 8.025 9C9.325 9 10.5042 9.15 11.5625 9.45C12.6208 9.75 13.575 10.1167 14.425 10.55C14.925 10.8 15.3208 11.1667 15.6125 11.65C15.9042 12.1333 16.05 12.6583 16.05 13.225V16H0Z"/></svg>
+                </div>
+                <div>
+                  <div
+                    class="assignment-name"
+                    th:text="${caseDetail.assignedGreffier.name}"
+                  >
+                    Greffier Name
+                  </div>
+                  <div
+                    class="assignment-subtext"
+                    th:text="${caseDetail.assignedGreffier.role}"
+                  >
+                    Role
+                  </div>
+                  <div
+                    class="assignment-subtext"
+                    th:if="${caseDetail.assignedGreffier.assignedDate != ''}"
+                    th:text="|Assigned ${caseDetail.assignedGreffier.assignedDate}|"
+                  >
+                    Assigned date
+                  </div>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
