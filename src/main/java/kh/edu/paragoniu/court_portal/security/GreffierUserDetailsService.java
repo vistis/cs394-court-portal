@@ -1,14 +1,10 @@
 package kh.edu.paragoniu.court_portal.security;
 
+import jakarta.persistence.EntityManager;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
-import kh.edu.paragoniu.court_shared.entity.SystemRole;
-import kh.edu.paragoniu.court_shared.entity.User;
-import kh.edu.paragoniu.court_shared.entity.UserRole;
-import kh.edu.paragoniu.court_shared.repository.RolePermissionRepository;
-import kh.edu.paragoniu.court_shared.repository.UserRepository;
-import kh.edu.paragoniu.court_shared.repository.UserRoleRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.UUID;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,28 +13,37 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Loads a court user by email (the login identifier for this panel) and
- * resolves their granted authorities. Roles become {@code ROLE_<name>}
- * authorities (e.g. {@code ROLE_GREFFIER}); each role's permissions are added
- * as plain-code authorities (e.g. {@code CASE_VIEW}). Inactive users are
- * treated as not found, so they cannot authenticate.
- */
 @Service
-@RequiredArgsConstructor
 public class GreffierUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
-    private final UserRoleRepository userRoleRepository;
-    private final RolePermissionRepository rolePermissionRepository;
+    private final EntityManager entityManager;
+
+    public GreffierUserDetailsService(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
 
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) {
-        // Spring's UserDetailsService contract calls the login identifier a
-        // "username"; for this panel that identifier is the user's email.
-        User user = userRepository
-            .findActiveByEmail(email)
+        AuthUser authUser = entityManager
+            .createQuery(
+                """
+                SELECT new kh.edu.paragoniu.court_portal.security.AuthUser(
+                    u.userId,
+                    u.username,
+                    u.password,
+                    CONCAT(u.firstName, ' ', u.lastName),
+                    u.isActive
+                )
+                FROM User u
+                WHERE LOWER(u.email) = LOWER(:email)
+                AND u.isActive = true
+                """,
+                AuthUser.class
+            )
+            .setParameter("email", email)
+            .getResultStream()
+            .findFirst()
             .orElseThrow(() ->
                 new UsernameNotFoundException(
                     "No active user found for email: " + email
@@ -46,29 +51,56 @@ public class GreffierUserDetailsService implements UserDetailsService {
             );
 
         Set<GrantedAuthority> authorities = new LinkedHashSet<>();
-        for (UserRole userRole : userRoleRepository.findByIdUserId(
-            user.getUserId()
-        )) {
-            SystemRole role = userRole.getSystemRole();
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
-            rolePermissionRepository
-                .findByIdSystemRoleId(role.getSystemRoleId())
-                .forEach(rp ->
-                    authorities.add(
-                        new SimpleGrantedAuthority(
-                            rp.getSystemPermission().getCode()
-                        )
-                    )
+        for (RoleGrant role : findRoles(authUser.userId())) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
+            findPermissions(role.systemRoleId())
+                .forEach(permission ->
+                    authorities.add(new SimpleGrantedAuthority(permission))
                 );
         }
 
         return new GreffierUserDetails(
-            user.getUserId(),
-            user.getUsername(),
-            user.getPassword(),
-            user.getFirstName() + " " + user.getLastName(),
-            user.isActive(),
+            authUser.userId(),
+            authUser.username(),
+            authUser.password(),
+            authUser.displayName(),
+            authUser.active(),
             authorities
         );
+    }
+
+    private List<RoleGrant> findRoles(UUID userId) {
+        return entityManager
+            .createQuery(
+                """
+                SELECT new kh.edu.paragoniu.court_portal.security.RoleGrant(
+                    sr.systemRoleId,
+                    sr.name
+                )
+                FROM UserRole ur
+                JOIN ur.systemRole sr
+                WHERE ur.id.userId = :userId
+                ORDER BY sr.name
+                """,
+                RoleGrant.class
+            )
+            .setParameter("userId", userId)
+            .getResultList();
+    }
+
+    private List<String> findPermissions(Integer systemRoleId) {
+        return entityManager
+            .createQuery(
+                """
+                SELECT sp.code
+                FROM RolePermission rp
+                JOIN rp.systemPermission sp
+                WHERE rp.id.systemRoleId = :systemRoleId
+                ORDER BY sp.code
+                """,
+                String.class
+            )
+            .setParameter("systemRoleId", systemRoleId)
+            .getResultList();
     }
 }

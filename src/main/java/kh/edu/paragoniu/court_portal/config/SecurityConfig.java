@@ -2,6 +2,7 @@ package kh.edu.paragoniu.court_portal.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +32,24 @@ public class SecurityConfig {
                         "/favicon.ico"
                     )
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/cases/new")
+                    .hasAuthority("CASE_CREATE")
+                    .requestMatchers(HttpMethod.POST, "/cases")
+                    .hasAuthority("CASE_CREATE")
+                    .requestMatchers(HttpMethod.GET, "/cases/*/status")
+                    .hasAuthority("CASE_UPDATE")
+                    .requestMatchers(HttpMethod.POST, "/cases/*/status")
+                    .hasAuthority("CASE_UPDATE")
+                    .requestMatchers(HttpMethod.GET, "/cases/*/docket/new")
+                    .hasAuthority("CASE_UPDATE")
+                    .requestMatchers(HttpMethod.POST, "/cases/*/docket")
+                    .hasAuthority("CASE_UPDATE")
+                    .requestMatchers(HttpMethod.GET, "/cases/*/docket")
+                    .hasAuthority("CASE_VIEW")
+                    .requestMatchers(HttpMethod.GET, "/cases")
+                    .hasAuthority("CASE_VIEW")
+                    .requestMatchers(HttpMethod.GET, "/cases/*")
+                    .hasAuthority("CASE_VIEW")
                     .anyRequest()
                     .authenticated()
             )
