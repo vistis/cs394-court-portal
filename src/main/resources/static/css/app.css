@@ -1919,3 +1919,254 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===================== Schedule Hearing form ===================== */
+.req {
+  color: #b42318;
+  margin-left: 2px;
+}
+
+/* Case reference search field + typeahead */
+.form-search {
+  position: relative;
+}
+.form-search .form-input {
+  padding-left: 40px;
+}
+.form-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 21px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.lookup {
+  position: relative;
+}
+.lookup-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+.lookup-results.open {
+  display: block;
+}
+.lookup-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-strong);
+}
+.lookup-item:last-child {
+  border-bottom: none;
+}
+.lookup-item:hover {
+  background: var(--surface);
+}
+.lookup-item-title {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.lookup-empty {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Amber info note */
+.form-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #7c2d12;
+  border-radius: 8px;
+  padding: 13px 15px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.form-note svg {
+  flex: none;
+  margin-top: 1px;
+  color: #c2610c;
+}
+
+/* ===================== Shared form base (card / fields / inputs) =====================
+   Used by case-form, hearing-schedule-form and case-document-form. Only the
+   classes NOT already defined above are added here (form-section, form-actions,
+   btn-outline, content--form, breadcrumb are left as-is). */
+.form-wrap {
+  width: 100%;
+  max-width: 800px;
+}
+.form-head {
+  margin-bottom: 24px;
+}
+.form-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.64px;
+  color: var(--text-strong);
+}
+.form-subtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--text);
+}
+.form-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-strong);
+}
+.form-hint {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text);
+}
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-strong);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: none;
+}
+.form-input,
+.form-select {
+  height: 42px;
+  padding: 0 16px;
+}
+.form-textarea {
+  min-height: 100px;
+  padding: 12px 16px;
+  resize: vertical;
+}
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: rgba(69, 70, 77, 0.5);
+}
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(64, 89, 170, 0.12);
+}
+.form-input--readonly {
+  background: #f2f4f6;
+  color: var(--text);
+  opacity: 0.8;
+}
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.form-error {
+  margin: 0;
+  font-size: 13px;
+  color: #b42318;
+}
+.btn-primary--form {
+  height: 42px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+/* Toggle switch (new-case "Is Public") */
+.form-field--toggle {
+  justify-content: flex-end;
+  padding-bottom: 11px;
+}
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch-track {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #e0e3e5;
+  transition: background-color 0.15s ease;
+}
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  transition: transform 0.15s ease;
+}
+.switch input:checked ~ .switch-track {
+  background: var(--accent);
+}
+.switch input:checked ~ .switch-track .switch-thumb {
+  transform: translateX(20px);
+}
+.switch-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-strong);
+}
+@media (max-width: 700px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Center form pages (case-form, hearing-schedule-form, document form) */
+.content--form {
+  margin-left: auto;
+  margin-right: auto;
+}

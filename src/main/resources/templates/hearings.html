@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hearings Schedule — Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('hearings')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content">
+        <!-- Page header -->
+        <div class="page-header">
+          <div class="page-heading">
+            <h1 class="page-title">Hearings Schedule</h1>
+            <p class="page-subtitle">
+              Search and manage all scheduled court appearances and trial dates.
+            </p>
+          </div>
+          <a th:href="@{/hearings/new}" class="btn-primary" sec:authorize="hasAuthority('CASE_UPDATE')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Schedule Hearing</span>
+          </a>
+        </div>
+
+        <!-- Filter &amp; search toolbar -->
+        <form class="toolbar" method="get" th:action="@{/hearings}">
+          <div class="toolbar-grid">
+            <div class="field field--search">
+              <label class="field-label">Search</label>
+              <div class="input-wrap">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                <input
+                  class="input"
+                  type="text"
+                  name="query"
+                  th:value="${query}"
+                  placeholder="Search by Case Number..."
+                />
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-label">Hearing Type</label>
+              <select class="select" name="hearingTypeId">
+                <option value="">All</option>
+                <option
+                  th:each="t : ${hearingTypes}"
+                  th:value="${t.hearingTypeId}"
+                  th:text="${t.name}"
+                  th:selected="${selectedHearingTypeId != null and selectedHearingTypeId == t.hearingTypeId}"
+                ></option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="field-label">Status</label>
+              <select class="select" name="status">
+                <option value="">All</option>
+                <option
+                  th:each="s : ${statuses}"
+                  th:value="${s}"
+                  th:text="${#strings.capitalizeWords(s.toLowerCase())}"
+                  th:selected="${selectedStatus != null and selectedStatus == s}"
+                ></option>
+              </select>
+            </div>
+          </div>
+
+          <div class="toolbar-grid toolbar-grid--bottom">
+            <div class="field field--date">
+              <label class="field-label">Date Range</label>
+              <div class="date-range">
+                <input class="input" type="date" name="fromDate" th:value="${fromDate}" />
+                <span class="date-sep">–</span>
+                <input class="input" type="date" name="toDate" th:value="${toDate}" />
+              </div>
+            </div>
+            <div class="toolbar-actions">
+              <a th:href="@{/hearings}" class="btn-link">Clear Filters</a>
+              <button type="submit" class="btn-secondary">Search</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="alert alert--error" th:if="${filterError}" th:text="${filterError}">
+          Filter error
+        </div>
+
+        <!-- Results table -->
+        <div class="table-card">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Case Number</th>
+                  <th>Hearing Type</th>
+                  <th>Courtroom</th>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${page.content}">
+                  <td>
+                    <a
+                      th:href="@{/cases/{caseId}(caseId=${row.caseId})}"
+                      class="cell-link"
+                      th:text="${row.caseNumber}"
+                      >CR-0000</a
+                    >
+                  </td>
+                  <td th:text="${row.hearingType}">Hearing Type</td>
+                  <td th:text="${row.courtroom}">Courtroom</td>
+                  <td th:text="${row.startTime}">Start</td>
+                  <td th:text="${row.endTime}">End</td>
+                  <td>
+                    <span
+                      class="badge"
+                      th:classappend="${row.badgeClass}"
+                      th:text="${row.status}"
+                      >Status</span
+                    >
+                  </td>
+                  <td>
+                    <a
+                      th:href="@{/cases/{caseId}/hearings(caseId=${row.caseId})}"
+                      class="icon-action"
+                      title="View hearing"
+                      aria-label="View hearing"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
+                  </td>
+                </tr>
+                <tr th:if="${page.empty}">
+                  <td colspan="7" class="table-empty">No hearings found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <span
+              class="pagination-info"
+              th:text="|Showing ${page.numberOfElements == 0 ? 0 : page.number * page.size + 1}-${page.number * page.size + page.numberOfElements} of ${page.totalElements} hearings|"
+              >Showing 1-8 of 14 hearings</span
+            >
+            <div class="pagination-btns">
+              <a
+                class="page-btn"
+                th:classappend="${page.first} ? 'page-btn--disabled' : ''"
+                th:href="${page.first} ? '#' : @{/hearings(query=${query},hearingTypeId=${selectedHearingTypeId},status=${selectedStatus},fromDate=${fromDate},toDate=${toDate},page=${page.number - 1})}"
+                >Previous</a
+              >
+              <a
+                class="page-btn"
+                th:classappend="${page.last} ? 'page-btn--disabled' : ''"
+                th:href="${page.last} ? '#' : @{/hearings(query=${query},hearingTypeId=${selectedHearingTypeId},status=${selectedStatus},fromDate=${fromDate},toDate=${toDate},page=${page.number + 1})}"
+                >Next</a
+              >
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
