@@ -74,7 +74,11 @@
             th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}"
             >Documents</a
           >
-          <span class="detail-tab detail-tab--disabled">Hearings</span>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}"
+            >Hearings</a
+          >
           <span class="detail-tab detail-tab--disabled">Participants</span>
           <span class="detail-tab detail-tab--disabled">Disposition</span>
         </nav>

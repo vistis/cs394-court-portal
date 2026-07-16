@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Schedule Hearing - ${caseDetail.caseNumber}|">Schedule Hearing</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--form hearing-form-content">
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <a
+            th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}"
+            th:text="${caseDetail.caseNumber}"
+            >CMS-2026-0001</a
+          >
+          <span>&gt;</span>
+          <span>Schedule Hearing</span>
+        </div>
+
+        <header class="page-header">
+          <div>
+            <h1 class="page-title">Schedule Hearing</h1>
+            <p class="page-subtitle">Set the date, time, and location for a case hearing.</p>
+          </div>
+        </header>
+
+        <form
+          class="case-form"
+          method="post"
+          th:action="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}"
+          th:object="${scheduleHearingForm}"
+        >
+          <section class="form-panel">
+            <div class="alert alert--error" th:if="${#fields.hasGlobalErrors()}">
+              <div th:each="error : ${#fields.globalErrors()}" th:text="${error}">
+                Unable to schedule hearing.
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="caseReference">Case Reference</label>
+              <input
+                id="caseReference"
+                class="input input--readonly"
+                type="text"
+                th:value="|${caseDetail.caseNumber} - ${caseDetail.title}|"
+                readonly
+              />
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label" for="hearingTypeId">Hearing Type *</label>
+                <select id="hearingTypeId" class="select" th:field="*{hearingTypeId}">
+                  <option value="">Select hearing type...</option>
+                  <option
+                    th:each="type : ${hearingTypes}"
+                    th:value="${type.id}"
+                    th:text="${type.name}"
+                  ></option>
+                </select>
+                <div
+                  class="field-error"
+                  th:if="${#fields.hasErrors('hearingTypeId')}"
+                  th:errors="*{hearingTypeId}"
+                ></div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="courtroomId">Courtroom *</label>
+                <select id="courtroomId" class="select" th:field="*{courtroomId}">
+                  <option value="">Select courtroom...</option>
+                  <option
+                    th:each="courtroom : ${courtrooms}"
+                    th:value="${courtroom.id}"
+                    th:text="${courtroom.name}"
+                  ></option>
+                </select>
+                <div
+                  class="field-error"
+                  th:if="${#fields.hasErrors('courtroomId')}"
+                  th:errors="*{courtroomId}"
+                ></div>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label class="field-label" for="startAt">Start Date &amp; Time *</label>
+                <input
+                  id="startAt"
+                  class="input"
+                  type="datetime-local"
+                  th:field="*{startAt}"
+                />
+                <div
+                  class="field-error"
+                  th:if="${#fields.hasErrors('startAt')}"
+                  th:errors="*{startAt}"
+                ></div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="endAt">End Date &amp; Time *</label>
+                <input
+                  id="endAt"
+                  class="input"
+                  type="datetime-local"
+                  th:field="*{endAt}"
+                />
+                <div
+                  class="field-error"
+                  th:if="${#fields.hasErrors('endAt')}"
+                  th:errors="*{endAt}"
+                ></div>
+              </div>
+            </div>
+
+            <div class="notice">
+              <span class="notice-icon">i</span>
+              <span>
+                The system checks courtroom availability before confirming the hearing.
+              </span>
+            </div>
+
+            <div class="form-actions">
+              <a
+                class="btn-light"
+                th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}"
+                >Cancel</a
+              >
+              <button class="btn-primary" type="submit">Schedule Hearing</button>
+            </div>
+          </section>
+        </form>
+      </main>
+    </div>
+  </body>
+</html>

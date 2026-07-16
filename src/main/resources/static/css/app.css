@@ -1289,6 +1289,13 @@ body {
   background: var(--surface);
 }
 
+.btn-light--sm {
+  min-width: auto;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
 .docket-toolbar {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) minmax(220px, 280px) auto auto;
@@ -1367,6 +1374,177 @@ body {
   min-height: 110px;
 }
 
+.hearing-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hearing-filter {
+  min-width: 230px;
+  height: 44px;
+}
+
+.hearing-schedule {
+  justify-content: center;
+}
+
+.hearing-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hearing-section-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.hearing-list {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.hearing-card {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.hearing-card:first-child {
+  border-top: 0;
+}
+
+.hearing-card--muted {
+  color: var(--text);
+}
+
+.hearing-date {
+  width: 60px;
+  min-height: 64px;
+  border-radius: 6px;
+  background: #edf0f3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.hearing-date span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.hearing-date strong {
+  color: var(--text-strong);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.hearing-main {
+  min-width: 0;
+}
+
+.hearing-main h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.hearing-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.hearing-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.hearing-reschedule-modal {
+  width: min(680px, calc(100vw - 40px));
+}
+
+.reschedule-current {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #eef2f7;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.reschedule-current-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--text-muted);
+  border-radius: 4px;
+  color: transparent;
+  flex: 0 0 auto;
+}
+
+.reschedule-current-icon::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-left: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.hearing-form-content {
+  max-width: 900px;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #ffedd5;
+  border: 1px solid #fed7aa;
+  color: #7c2d12;
+  font-size: 14px;
+}
+
+.notice-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid currentColor;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
 @media (max-width: 900px) {
   .toolbar-grid,
   .toolbar-grid--bottom {
@@ -1410,5 +1588,27 @@ body {
 
   .docket-modal {
     left: 50%;
+  }
+
+  .hearing-toolbar,
+  .hearing-card {
+    grid-template-columns: 1fr;
+  }
+
+  .hearing-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hearing-card {
+    gap: 14px;
+  }
+
+  .hearing-actions {
+    align-items: flex-start;
+  }
+
+  .hearing-schedule {
+    width: 100%;
   }
 }
