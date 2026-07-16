@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schedule Hearing — Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('hearings')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--form">
+        <div class="form-wrap">
+          <nav class="breadcrumb">
+            <a th:href="@{/hearings}" class="breadcrumb-link">Hearings</a>
+            <span class="breadcrumb-sep">›</span>
+            <span class="breadcrumb-current">Schedule Hearing</span>
+          </nav>
+
+          <div class="form-head">
+            <h1 class="form-title">Schedule Hearing</h1>
+            <p class="form-subtitle">
+              Set the date, time, and location for a case hearing.
+            </p>
+          </div>
+
+          <form
+            class="form-card"
+            method="post"
+            th:action="@{/hearings}"
+            th:object="${globalHearingForm}"
+            autocomplete="off"
+          >
+            <div
+              class="alert alert--error"
+              th:if="${#fields.hasGlobalErrors()}"
+              th:errors="*{global}"
+            >
+              Could not schedule the hearing.
+            </div>
+
+            <section class="form-section">
+              <!-- Case Reference (typeahead) -->
+              <div class="form-field">
+                <label class="form-label" for="caseSearch"
+                  >Case Reference <span class="req">*</span></label
+                >
+                <div class="lookup form-search">
+                  <svg class="form-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input
+                    class="form-input"
+                    type="text"
+                    id="caseSearch"
+                    th:value="${globalHearingForm.caseReference}"
+                    placeholder="Search by Case Number or Title..."
+                  />
+                  <input type="hidden" id="caseId" th:field="*{caseId}" />
+                  <div class="lookup-results" id="caseResults"></div>
+                </div>
+                <p
+                  class="form-error"
+                  th:if="${#fields.hasErrors('caseId')}"
+                  th:errors="*{caseId}"
+                ></p>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-field">
+                  <label class="form-label" for="hearingTypeId"
+                    >Hearing Type <span class="req">*</span></label
+                  >
+                  <select
+                    class="form-select"
+                    id="hearingTypeId"
+                    th:field="*{hearingTypeId}"
+                  >
+                    <option value="">Select hearing type...</option>
+                    <option
+                      th:each="t : ${hearingTypes}"
+                      th:value="${t.id}"
+                      th:text="${t.name}"
+                    ></option>
+                  </select>
+                  <p
+                    class="form-error"
+                    th:if="${#fields.hasErrors('hearingTypeId')}"
+                    th:errors="*{hearingTypeId}"
+                  ></p>
+                </div>
+
+                <div class="form-field">
+                  <label class="form-label" for="courtroomId"
+                    >Courtroom <span class="req">*</span></label
+                  >
+                  <select
+                    class="form-select"
+                    id="courtroomId"
+                    th:field="*{courtroomId}"
+                  >
+                    <option value="">Select courtroom...</option>
+                    <option
+                      th:each="c : ${courtrooms}"
+                      th:value="${c.id}"
+                      th:text="${c.name}"
+                    ></option>
+                  </select>
+                  <p
+                    class="form-error"
+                    th:if="${#fields.hasErrors('courtroomId')}"
+                    th:errors="*{courtroomId}"
+                  ></p>
+                </div>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="form-field">
+                  <label class="form-label" for="startAt"
+                    >Start Date &amp; Time <span class="req">*</span></label
+                  >
+                  <input
+                    class="form-input"
+                    type="datetime-local"
+                    id="startAt"
+                    th:field="*{startAt}"
+                  />
+                  <p
+                    class="form-error"
+                    th:if="${#fields.hasErrors('startAt')}"
+                    th:errors="*{startAt}"
+                  ></p>
+                </div>
+
+                <div class="form-field">
+                  <label class="form-label" for="endAt"
+                    >End Date &amp; Time <span class="req">*</span></label
+                  >
+                  <input
+                    class="form-input"
+                    type="datetime-local"
+                    id="endAt"
+                    th:field="*{endAt}"
+                  />
+                  <p
+                    class="form-error"
+                    th:if="${#fields.hasErrors('endAt')}"
+                    th:errors="*{endAt}"
+                  ></p>
+                </div>
+              </div>
+
+              <div class="form-note">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                <span
+                  >Note: The system will automatically check for courtroom
+                  availability and scheduling conflicts before confirming.</span
+                >
+              </div>
+            </section>
+
+            <div class="form-actions">
+              <a th:href="@{/hearings}" class="btn-outline">Cancel</a>
+              <button type="submit" class="btn-primary btn-primary--form">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                <span>Schedule Hearing</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <script th:inline="none">
+      (function () {
+        const input = document.getElementById("caseSearch");
+        const hidden = document.getElementById("caseId");
+        const results = document.getElementById("caseResults");
+        if (!input) return;
+        let timer;
+        let items = [];
+
+        function esc(s) {
+          return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+            return {
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[c];
+          });
+        }
+        function close() {
+          results.classList.remove("open");
+          results.innerHTML = "";
+        }
+        function pick(it) {
+          hidden.value = it.caseId;
+          input.value = it.caseNumber + " — " + it.title;
+          close();
+        }
+        function render(list) {
+          items = list || [];
+          if (!items.length) {
+            results.innerHTML =
+              '<div class="lookup-empty">No matching cases</div>';
+            results.classList.add("open");
+            return;
+          }
+          results.innerHTML = items
+            .map(function (it, i) {
+              return (
+                '<div class="lookup-item" data-i="' +
+                i +
+                '"><div>' +
+                esc(it.caseNumber) +
+                '</div><div class="lookup-item-title">' +
+                esc(it.title) +
+                "</div></div>"
+              );
+            })
+            .join("");
+          results.classList.add("open");
+          results.querySelectorAll(".lookup-item").forEach(function (el) {
+            el.addEventListener("mousedown", function (e) {
+              e.preventDefault();
+              pick(items[+el.dataset.i]);
+            });
+          });
+        }
+
+        input.addEventListener("input", function () {
+          hidden.value = "";
+          const q = input.value.trim();
+          clearTimeout(timer);
+          if (q.length < 1) {
+            close();
+            return;
+          }
+          timer = setTimeout(function () {
+            fetch("/hearings/case-lookup?q=" + encodeURIComponent(q))
+              .then(function (r) {
+                return r.json();
+              })
+              .then(render)
+              .catch(close);
+          }, 200);
+        });
+        input.addEventListener("blur", function () {
+          setTimeout(close, 150);
+        });
+      })();
+    </script>
+  </body>
+</html>

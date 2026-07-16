@@ -32,6 +32,10 @@ public class SecurityConfig {
                         "/favicon.ico"
                     )
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/hearings/new")
+                    .hasAuthority("CASE_UPDATE")
+                    .requestMatchers(HttpMethod.POST, "/hearings")
+                    .hasAuthority("CASE_UPDATE")
                     .requestMatchers(HttpMethod.GET, "/cases/new")
                     .hasAuthority("CASE_CREATE")
                     .requestMatchers(HttpMethod.POST, "/cases")
