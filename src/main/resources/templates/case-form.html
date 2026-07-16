@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register New Case - Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--form">
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <span>Open New Case</span>
+        </div>
+
+        <div class="page-header">
+          <div class="page-heading">
+            <h1 class="page-title">Register New Case</h1>
+            <p class="page-subtitle">
+              Enter the initial details to open a new court case.
+            </p>
+          </div>
+        </div>
+
+        <form
+          class="case-form"
+          method="post"
+          th:action="@{/cases}"
+          th:object="${createCaseForm}"
+        >
+          <div
+            class="alert alert--error"
+            th:if="${#fields.hasGlobalErrors()}"
+            th:each="err : ${#fields.globalErrors()}"
+            th:text="${err}"
+          >
+            Unable to create case.
+          </div>
+
+          <section class="form-panel">
+            <div class="form-section">
+              <h2 class="form-section-title">General Information</h2>
+              <div class="form-divider"></div>
+
+              <div class="field">
+                <div class="field-row-label">
+                  <label class="field-label" for="caseNumber">
+                    Case Number
+                  </label>
+                  <span class="field-hint">
+                    Auto-generated on submission
+                  </span>
+                </div>
+                <input
+                  class="input input--readonly"
+                  id="caseNumber"
+                  type="text"
+                  value="CMS-YEAR-AUTO"
+                  readonly
+                />
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="title">Case Title</label>
+                <input
+                  class="input"
+                  id="title"
+                  type="text"
+                  th:field="*{title}"
+                  placeholder="e.g., State vs. Doe"
+                />
+                <div
+                  class="field-error"
+                  th:if="${#fields.hasErrors('title')}"
+                  th:errors="*{title}"
+                >
+                  Title error
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label" for="description">
+                  Description
+                </label>
+                <textarea
+                  class="input textarea"
+                  id="description"
+                  th:field="*{description}"
+                  placeholder="Enter case background or initial notes..."
+                ></textarea>
+                <div
+                  class="field-error"
+                  th:if="${#fields.hasErrors('description')}"
+                  th:errors="*{description}"
+                >
+                  Description error
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h2 class="form-section-title">Classification &amp; Routing</h2>
+              <div class="form-divider"></div>
+
+              <div class="form-grid">
+                <div class="field">
+                  <label class="field-label" for="classificationId">
+                    Classification
+                  </label>
+                  <select
+                    class="select"
+                    id="classificationId"
+                    th:field="*{classificationId}"
+                  >
+                    <option value="">Select classification...</option>
+                    <option
+                      th:each="classification : ${classifications}"
+                      th:value="${classification.id}"
+                      th:text="${classification.name}"
+                    ></option>
+                  </select>
+                  <div
+                    class="field-error"
+                    th:if="${#fields.hasErrors('classificationId')}"
+                    th:errors="*{classificationId}"
+                  >
+                    Classification error
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label class="field-label" for="initialStatus">
+                    Initial Status
+                  </label>
+                  <input
+                    class="input input--readonly"
+                    id="initialStatus"
+                    type="text"
+                    value="Filing Open"
+                    readonly
+                  />
+                </div>
+              </div>
+
+              <div class="form-grid form-grid--mixed">
+                <div class="field">
+                  <label class="field-label" for="filedDate">
+                    Filed Date
+                  </label>
+                  <input
+                    class="input"
+                    id="filedDate"
+                    type="date"
+                    th:field="*{filedDate}"
+                  />
+                  <div
+                    class="field-error"
+                    th:if="${#fields.hasErrors('filedDate')}"
+                    th:errors="*{filedDate}"
+                  >
+                    Date error
+                  </div>
+                </div>
+
+                <label class="toggle-field" for="publicCase">
+                  <input
+                    id="publicCase"
+                    class="toggle-input"
+                    type="checkbox"
+                    th:field="*{publicCase}"
+                  />
+                  <span class="toggle-track"></span>
+                  <span class="toggle-label">Is Public</span>
+                </label>
+              </div>
+
+              <div class="field">
+                <div class="field-row-label">
+                  <label class="field-label" for="judgeId">
+                    Assign Judge
+                  </label>
+                  <span class="field-hint">Optional</span>
+                </div>
+                <select class="select" id="judgeId" th:field="*{judgeId}">
+                  <option value="">Unassigned</option>
+                  <option
+                    th:each="judge : ${judges}"
+                    th:value="${judge.id}"
+                    th:text="${judge.name}"
+                  ></option>
+                </select>
+                <div
+                  class="field-error"
+                  th:if="${#fields.hasErrors('judgeId')}"
+                  th:errors="*{judgeId}"
+                >
+                  Judge error
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <a th:href="@{/cases}" class="btn-secondary">Cancel</a>
+              <button class="btn-primary" type="submit" sec:authorize="hasAuthority('CASE_CREATE')">
+                Submit &amp; Open Case
+              </button>
+            </div>
+          </section>
+        </form>
+      </main>
+    </div>
+  </body>
+</html>

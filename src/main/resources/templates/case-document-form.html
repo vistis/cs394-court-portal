@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Upload Document - ${caseDetail.caseNumber}|">Upload Document</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content form-page">
+        <div class="form-shell">
+          <div class="breadcrumb">
+            <a th:href="@{/cases}">Cases</a>
+            <span>&gt;</span>
+            <a th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}" th:text="${caseDetail.caseNumber}">CMS-2026-0001</a>
+            <span>&gt;</span>
+            <span>Upload Document</span>
+          </div>
+
+          <h1>Upload Document</h1>
+          <p class="page-subtitle" th:text="|Case ${caseDetail.caseNumber}|">Case CMS-2026-0001</p>
+
+          <form
+            class="form-card"
+            method="post"
+            enctype="multipart/form-data"
+            th:action="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}"
+            th:object="${uploadDocumentForm}"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+          >
+            <div class="form-error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}">
+              Upload failed.
+            </div>
+
+            <div class="form-grid form-grid--two">
+              <div class="form-group form-group--full">
+                <label class="field-label" for="title">Document Title</label>
+                <input class="input" id="title" type="text" th:field="*{title}" placeholder="e.g., Motion for Summary Judgment" />
+                <div class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Error</div>
+              </div>
+
+              <div class="form-group">
+                <label class="field-label" for="documentType">Document Type</label>
+                <select class="select" id="documentType" th:field="*{documentType}">
+                  <option th:each="type : ${documentTypes}" th:value="${type.code}" th:text="${type.label}"></option>
+                </select>
+                <div class="field-error" th:if="${#fields.hasErrors('documentType')}" th:errors="*{documentType}">Error</div>
+              </div>
+
+              <div class="form-group">
+                <label class="field-label">Submitted By</label>
+                <input class="input input--readonly" type="text" th:value="${submittedByDisplay}" readonly />
+              </div>
+
+              <div class="form-group form-group--full switch-row">
+                <label class="toggle">
+                  <input type="checkbox" th:field="*{confidential}" />
+                  <span class="toggle-slider"></span>
+                  <span>Mark as Confidential</span>
+                </label>
+              </div>
+
+              <div class="form-group form-group--full">
+                <label class="field-label" for="file">Upload File</label>
+                <input class="input file-input" id="file" type="file" th:field="*{file}" accept=".pdf,.docx,.jpg,.jpeg,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg" />
+                <p class="field-hint">PDF, DOCX, JPG - max 20 MB</p>
+                <div class="field-error" th:if="${#fields.hasErrors('file')}" th:errors="*{file}">Error</div>
+              </div>
+            </div>
+
+            <section class="metadata-panel">
+              <div class="section-title-row">
+                <h2>Additional Details</h2>
+              </div>
+
+              <div class="metadata-section" data-document-section="Filing">
+                <div class="form-grid form-grid--two">
+                  <div class="form-group">
+                    <label class="field-label">Filing Category</label>
+                    <input class="input" type="text" th:field="*{filingCategory}" />
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Relief Sought</label>
+                    <input class="input" type="text" th:field="*{reliefSought}" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="metadata-section" data-document-section="Motion">
+                <div class="form-grid form-grid--two">
+                  <div class="form-group">
+                    <label class="field-label">Requested Action</label>
+                    <input class="input" type="text" th:field="*{requestAction}" placeholder="e.g., Dismiss case, suppress evidence, extend deadline" />
+                  </div>
+                  <input type="hidden" th:field="*{motionStatus}" value="Pending" />
+                  <div class="form-group form-group--full">
+                    <label class="field-label">Argument Summary</label>
+                    <textarea class="input textarea" rows="5" th:field="*{argumentSummary}" placeholder="Summarize the legal argument or reason stated in the motion."></textarea>
+                  </div>
+                  <div class="form-group switch-row">
+                    <label class="toggle">
+                      <input type="checkbox" th:field="*{hearingRequired}" />
+                      <span class="toggle-slider"></span>
+                      <span>Hearing Required</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="metadata-section" data-document-section="Continuance">
+                <div class="form-grid form-grid--two">
+                  <div class="form-group">
+                    <label class="field-label">Approved Motion</label>
+                    <select class="select" th:field="*{approvedMotionId}">
+                      <option value="">None</option>
+                      <option th:each="motion : ${motionOptions}" th:value="${motion.id}" th:text="${motion.label}"></option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Original Hearing</label>
+                    <select class="select" th:field="*{originalHearingId}">
+                      <option value="">None</option>
+                      <option th:each="hearing : ${hearingOptions}" th:value="${hearing.id}" th:text="${hearing.label}"></option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">New Hearing</label>
+                    <select class="select" th:field="*{newHearingId}">
+                      <option value="">None</option>
+                      <option th:each="hearing : ${hearingOptions}" th:value="${hearing.id}" th:text="${hearing.label}"></option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Requested By Party</label>
+                    <select class="select" th:field="*{requestedByParty}">
+                      <option value="">Select requesting party</option>
+                      <option value="Plaintiff / Prosecution">Plaintiff / Prosecution</option>
+                      <option value="Defendant / Respondent">Defendant / Respondent</option>
+                      <option value="The Court">The Court</option>
+                    </select>
+                  </div>
+                  <div class="form-group form-group--full">
+                    <label class="field-label">Reason</label>
+                    <textarea class="input textarea" rows="4" th:field="*{continuanceReason}"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="metadata-section" data-document-section="Evidence">
+                <div class="form-grid form-grid--two">
+                  <div class="form-group">
+                    <label class="field-label">Evidence Type</label>
+                    <input class="input" type="text" th:field="*{evidenceType}" />
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Exhibit Number</label>
+                    <input class="input" type="text" th:field="*{exhibitNumber}" placeholder="e.g., EX-104" />
+                  </div>
+                </div>
+
+                <div class="chain-table-wrap">
+                  <label class="field-label">Chain of Custody</label>
+                  <table class="chain-table" id="chainTable">
+                    <thead>
+                      <tr>
+                        <th>Handler</th>
+                        <th>Action</th>
+                        <th>Location</th>
+                        <th>Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:each="row, stat : *{chainOfCustody}">
+                        <td>
+                          <select class="select chain-handler" th:field="*{chainOfCustody[__${stat.index}__].handlerId}">
+                            <option value="">Select handler</option>
+                            <option th:each="handler : ${handlerOptions}" th:value="${handler.id}" th:text="${handler.label}"></option>
+                          </select>
+                          <input type="hidden" class="chain-handler-name" th:field="*{chainOfCustody[__${stat.index}__].handlerName}" />
+                        </td>
+                        <td>
+                          <select class="select" th:field="*{chainOfCustody[__${stat.index}__].action}">
+                            <option value="">Select action</option>
+                            <option value="Collected">Collected</option>
+                            <option value="Logged into System">Logged into System</option>
+                            <option value="Checked Out">Checked Out</option>
+                            <option value="Returned">Returned</option>
+                          </select>
+                        </td>
+                        <td><input class="input" type="text" th:field="*{chainOfCustody[__${stat.index}__].location}" /></td>
+                        <td><input class="input" type="datetime-local" th:field="*{chainOfCustody[__${stat.index}__].timestamp}" /></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <button class="link-button" type="button" id="addChainRow">+ Add Handler</button>
+                </div>
+              </div>
+
+              <div class="metadata-section" data-document-section="Disposition">
+                <div class="form-grid form-grid--two">
+                  <div class="form-group">
+                    <label class="field-label">Originating Disposition</label>
+                    <select class="select" th:field="*{originatingDispositionId}">
+                      <option value="">None</option>
+                      <option th:each="disposition : ${dispositionOptions}" th:value="${disposition.id}" th:text="${disposition.label}"></option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Prejudice Status</label>
+                    <select class="select" th:field="*{prejudiceStatus}">
+                      <option value="">Select prejudice status</option>
+                      <option value="With Prejudice">With Prejudice</option>
+                      <option value="Without Prejudice">Without Prejudice</option>
+                    </select>
+                  </div>
+                  <div class="form-group form-group--full">
+                    <label class="field-label">Sentence Terms</label>
+                    <textarea class="input textarea" rows="4" th:field="*{sentenceTerms}"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="metadata-section" data-document-section="Appeal">
+                <div class="form-grid form-grid--two">
+                  <div class="form-group">
+                    <label class="field-label">Target Disposition</label>
+                    <select class="select" th:field="*{targetDispositionId}">
+                      <option value="">None</option>
+                      <option th:each="disposition : ${dispositionOptions}" th:value="${disposition.id}" th:text="${disposition.label}"></option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Appellate Court Level</label>
+                    <input class="input" type="text" th:field="*{appellateCourtLevel}" />
+                  </div>
+                  <div class="form-group form-group--full">
+                    <label class="field-label">Grounds for Appeal</label>
+                    <textarea class="input textarea" rows="4" th:field="*{groundsForAppeal}"></textarea>
+                  </div>
+                  <div class="form-group switch-row">
+                    <label class="toggle">
+                      <input type="checkbox" th:field="*{lowerCourtRecordVerified}" />
+                      <span class="toggle-slider"></span>
+                      <span>Lower Court Record Verified</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="form-actions">
+              <a class="btn-secondary" th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}">Cancel</a>
+              <button class="btn-primary" type="submit">Upload Document</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        var typeSelect = document.getElementById('documentType');
+        var sections = Array.prototype.slice.call(document.querySelectorAll('[data-document-section]'));
+
+        function refreshSections() {
+          var selected = typeSelect ? typeSelect.value : 'Filing';
+          sections.forEach(function (section) {
+            section.hidden = section.getAttribute('data-document-section') !== selected;
+          });
+        }
+
+        function syncHandlerNames(scope) {
+          Array.prototype.slice.call((scope || document).querySelectorAll('.chain-handler')).forEach(function (select) {
+            var hidden = select.closest('td').querySelector('.chain-handler-name');
+            if (hidden) {
+              hidden.value = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : '';
+            }
+            select.addEventListener('change', function () {
+              if (hidden) {
+                hidden.value = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : '';
+              }
+            });
+          });
+        }
+
+        var addButton = document.getElementById('addChainRow');
+        if (addButton) {
+          addButton.addEventListener('click', function () {
+            var body = document.querySelector('#chainTable tbody');
+            var first = body.querySelector('tr');
+            if (!first) return;
+            var row = first.cloneNode(true);
+            var index = body.querySelectorAll('tr').length;
+            Array.prototype.slice.call(row.querySelectorAll('input, select')).forEach(function (input) {
+              input.name = input.name.replace(/chainOfCustody\[\d+\]/, 'chainOfCustody[' + index + ']');
+              input.id = input.id ? input.id.replace(/chainOfCustody\d+/, 'chainOfCustody' + index) : input.id;
+              if (input.tagName === 'SELECT') {
+                input.selectedIndex = 0;
+              } else {
+                input.value = '';
+              }
+            });
+            body.appendChild(row);
+            syncHandlerNames(row);
+          });
+        }
+
+        if (typeSelect) {
+          typeSelect.addEventListener('change', refreshSections);
+        }
+        refreshSections();
+        syncHandlerNames(document);
+      })();
+    </script>
+  </body>
+</html>

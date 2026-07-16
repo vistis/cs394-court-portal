@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Initiate Appeal - ${caseDetail.caseNumber}|">
+      Initiate Appeal
+    </title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app app--modal-open">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail modal-page-content">
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+        </div>
+
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <div class="detail-chips">
+              <span class="badge badge--red" th:text="${caseDetail.classification}">Criminal</span>
+              <span class="badge" th:classappend="${caseDetail.badgeClass}" th:text="${caseDetail.status}">Open</span>
+              <span class="badge badge--slate" th:text="${caseDetail.visibility}">Internal</span>
+            </div>
+            <h1 class="detail-title" th:text="|${caseDetail.caseNumber}: ${caseDetail.title}|">
+              CMS-2026-0001: Case Title
+            </h1>
+          </div>
+        </section>
+
+        <nav class="detail-tabs" aria-label="Case sections">
+          <a class="detail-tab" th:href="@{/cases/{caseId}(caseId=${caseDetail.caseId})}">Overview</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}">Docket Sheet</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}">Documents</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}">Hearings</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}">Participants</a>
+          <a class="detail-tab detail-tab--active" th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}">Disposition</a>
+        </nav>
+
+        <section class="disposition-panel">
+          <h2 class="disposition-heading">Disposition</h2>
+          <article class="disposition-summary" th:if="${dispositionTab.hasDisposition()}">
+            <div class="disposition-body">
+              <div class="disposition-title-row">
+                <span class="badge badge--gray" th:text="${dispositionTab.disposition.outcome}">Settled</span>
+                <span class="disposition-date" th:text="|• ${dispositionTab.disposition.dispositionDate}|">• Nov 05, 2023</span>
+              </div>
+              <p th:text="${dispositionTab.disposition.rulingSummary}">Ruling summary.</p>
+              <strong th:text="|Presiding: ${dispositionTab.disposition.presidingJudge}|">Presiding: Hon. Sarah Jenkins</strong>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-scrim" aria-hidden="true"></div>
+
+    <section
+      class="status-modal appeal-modal"
+      role="dialog"
+      aria-labelledby="appealModalTitle"
+      aria-modal="true"
+    >
+      <div class="status-modal-head status-modal-head--dark">
+        <div>
+          <h1 id="appealModalTitle" class="status-modal-title">
+            Initiate Appeal
+          </h1>
+        </div>
+        <a
+          class="modal-close modal-close--light"
+          th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+          aria-label="Close"
+          >&times;</a
+        >
+      </div>
+
+      <form
+        class="status-modal-form"
+        method="post"
+        th:action="@{/cases/{caseId}/appeal(caseId=${caseDetail.caseId})}"
+      >
+        <div class="alert alert--error" th:if="${appealError}" th:text="${appealError}">
+          Unable to create appeal.
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="originalCaseId">Original Case ID</label>
+          <input
+            class="input input--readonly"
+            id="originalCaseId"
+            type="text"
+            th:value="${caseDetail.caseNumber}"
+            readonly
+          />
+        </div>
+
+        <div class="status-modal-actions">
+          <a
+            th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+            class="btn-link"
+            >Cancel</a
+          >
+          <button class="btn-primary" type="submit" sec:authorize="hasAuthority('CASE_CREATE')">
+            Create Appellate Case
+          </button>
+        </div>
+      </form>
+    </section>
+  </body>
+</html>

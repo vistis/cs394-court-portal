@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Documents - ${caseDetail.caseNumber}|">Documents</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <div class="alert alert--success" th:if="${successMessage}" th:text="${successMessage}">
+          Document uploaded successfully.
+        </div>
+
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+        </div>
+
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <div class="detail-chips">
+              <span class="badge badge--red" th:text="${caseDetail.classification}">Criminal</span>
+              <span class="badge" th:classappend="${caseDetail.badgeClass}" th:text="${caseDetail.status}">Open</span>
+              <span class="badge badge--slate" th:text="${caseDetail.visibility}">Internal</span>
+            </div>
+            <h1 class="detail-title" th:text="|${caseDetail.caseNumber}: ${caseDetail.title}|">
+              CMS-2026-0001: Case Title
+            </h1>
+            <div class="detail-meta">
+              <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+              <span th:if="${caseDetail.filedDate != ''}">
+                Filed <span th:text="${caseDetail.filedDate}">Jan 01, 2026</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <nav class="detail-tabs" aria-label="Case sections">
+          <a class="detail-tab" th:href="@{/cases/{caseId}(caseId=${caseDetail.caseId})}">Overview</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}">Docket Sheet</a>
+          <a class="detail-tab detail-tab--active" href="#">
+            Documents
+          </a>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}"
+            >Hearings</a
+          >
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}"
+            >Participants</a
+          >
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+            >Disposition</a
+          >
+        </nav>
+
+        <form
+          class="docket-toolbar documents-toolbar"
+          method="get"
+          th:action="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}"
+        >
+          <div class="input-wrap docket-search">
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+            <input class="input" type="search" name="query" placeholder="Search documents..." th:value="${query}" />
+          </div>
+
+          <select class="select docket-filter" name="documentType" onchange="this.form.submit()">
+            <option value="">All Types</option>
+            <option
+              th:each="type : ${documentTypes}"
+              th:value="${type.code}"
+              th:text="${type.label}"
+              th:selected="${type.code == selectedDocumentType}"
+            ></option>
+          </select>
+
+          <input class="input date-filter" type="date" name="uploadedDate" th:value="${uploadedDate}" />
+          <button class="btn-secondary" type="submit">Search</button>
+
+          <a
+            class="btn-primary docket-add"
+            th:href="@{/cases/{caseId}/documents/new(caseId=${caseDetail.caseId})}"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+            >Upload New Document</a
+          >
+        </form>
+
+        <section class="table-card">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Document Name</th>
+                  <th>Date Filed</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${documentPage.empty}">
+                  <td colspan="4" class="table-empty">No documents found.</td>
+                </tr>
+                <tr th:each="document : ${documentPage.content}">
+                  <td>
+                    <span class="badge" th:classappend="${document.badgeClass}" th:text="${document.typeLabel}">Filing</span>
+                  </td>
+                  <td>
+                    <span th:text="${document.title}">Document title</span>
+                    <span class="confidential-note" th:if="${document.confidential}">Confidential</span>
+                  </td>
+                  <td th:text="${document.uploadedDate}">Jul 16, 2026</td>
+                  <td class="table-actions">
+                    <a th:href="@{/cases/{caseId}/documents/{documentId}(caseId=${caseDetail.caseId}, documentId=${document.documentId})}" title="View">View</a>
+                    <a th:href="@{/cases/{caseId}/documents/{documentId}/download(caseId=${caseDetail.caseId}, documentId=${document.documentId})}" title="Download">Download</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination" th:if="${documentPage.totalPages > 1}">
+            <div class="pagination-info" th:text="|Page ${documentPage.number + 1} of ${documentPage.totalPages}|">
+              Page 1 of 1
+            </div>
+            <div class="pagination-btns">
+              <a
+                class="page-btn"
+                th:classappend="${!documentPage.hasPrevious()} ? 'page-btn--disabled' : ''"
+                th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId}, page=${documentPage.number - 1}, query=${query}, documentType=${selectedDocumentType}, uploadedDate=${uploadedDate})}"
+                >Previous</a
+              >
+              <a
+                class="page-btn"
+                th:classappend="${!documentPage.hasNext()} ? 'page-btn--disabled' : ''"
+                th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId}, page=${documentPage.number + 1}, query=${query}, documentType=${selectedDocumentType}, uploadedDate=${uploadedDate})}"
+                >Next</a
+              >
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

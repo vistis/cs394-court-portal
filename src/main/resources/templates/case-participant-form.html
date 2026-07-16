@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Add Participant - ${caseDetail.caseNumber}|">
+      Add Participant
+    </title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app app--modal-open">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail modal-page-content">
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+        </div>
+
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <div class="detail-chips">
+              <span class="badge badge--red" th:text="${caseDetail.classification}">Criminal</span>
+              <span class="badge" th:classappend="${caseDetail.badgeClass}" th:text="${caseDetail.status}">Open</span>
+              <span class="badge badge--slate" th:text="${caseDetail.visibility}">Internal</span>
+            </div>
+            <h1 class="detail-title" th:text="|${caseDetail.caseNumber}: ${caseDetail.title}|">
+              CMS-2026-0001: Case Title
+            </h1>
+            <div class="detail-meta">
+              <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+              <span th:if="${caseDetail.filedDate != ''}">
+                Filed <span th:text="${caseDetail.filedDate}">Jan 01, 2026</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <nav class="detail-tabs" aria-label="Case sections">
+          <a class="detail-tab" th:href="@{/cases/{caseId}(caseId=${caseDetail.caseId})}">Overview</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}">Docket Sheet</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}">Documents</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}">Hearings</a>
+          <a class="detail-tab detail-tab--active" th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}">Participants</a>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+            >Disposition</a
+          >
+        </nav>
+
+        <form
+          class="docket-toolbar participants-toolbar"
+          method="get"
+          th:action="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}"
+        >
+          <div class="input-wrap docket-search">
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+            <input class="input" type="search" placeholder="Search by name or role..." disabled />
+          </div>
+          <select class="select docket-filter" disabled>
+            <option>Filter by: All Roles</option>
+          </select>
+          <button class="btn-secondary" type="button" disabled>Search</button>
+          <a class="btn-primary docket-add" href="#" aria-disabled="true">+ Add Participant</a>
+        </form>
+
+        <section class="table-card">
+          <div class="table-scroll">
+            <table class="data-table participants-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Contact Info</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${#lists.isEmpty(participants)}">
+                  <td colspan="4" class="table-empty">No participants found.</td>
+                </tr>
+                <tr th:each="participant : ${participants}">
+                  <td>
+                    <div class="participant-name" th:text="${participant.name}">Participant Name</div>
+                    <div class="participant-type" th:text="${participant.partyType}">Individual</div>
+                  </td>
+                  <td th:text="${participant.role}">Witness</td>
+                  <td th:text="${participant.contactInfo}">email: name@example.com</td>
+                  <td>Remove</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-scrim" aria-hidden="true"></div>
+
+    <section
+      class="status-modal participant-modal"
+      role="dialog"
+      aria-labelledby="participantModalTitle"
+      aria-modal="true"
+    >
+      <div class="status-modal-head">
+        <div>
+          <h1 id="participantModalTitle" class="status-modal-title">
+            Add Participant
+          </h1>
+          <p class="status-modal-subtitle" th:text="|Case: ${caseDetail.caseNumber}|">
+            Case: CMS-2026-0001
+          </p>
+        </div>
+        <a
+          class="modal-close"
+          th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}"
+          aria-label="Close"
+          >&times;</a
+        >
+      </div>
+
+      <form
+        class="status-modal-form participant-modal-form"
+        method="post"
+        th:action="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}"
+        th:object="${addCaseParticipantForm}"
+      >
+        <div
+          class="alert alert--error"
+          th:if="${#fields.hasGlobalErrors()}"
+          th:each="err : ${#fields.globalErrors()}"
+          th:text="${err}"
+        >
+          Unable to add participant.
+        </div>
+
+        <div class="field">
+          <label class="field-label">Party Type</label>
+          <div class="segment-control">
+            <a
+              th:class="${selectedPartyType == 'Individual'} ? 'segment segment--active' : 'segment'"
+              th:href="@{/cases/{caseId}/participants/add(caseId=${caseDetail.caseId}, partyType='Individual')}"
+              >Individual</a
+            >
+            <a
+              th:class="${selectedPartyType == 'Group'} ? 'segment segment--active' : 'segment'"
+              th:href="@{/cases/{caseId}/participants/add(caseId=${caseDetail.caseId}, partyType='Group')}"
+              >Group</a
+            >
+          </div>
+          <input type="hidden" name="partyType" th:value="${selectedPartyType}" />
+          <div class="field-error" th:if="${#fields.hasErrors('partyType')}" th:errors="*{partyType}">
+            Party type error
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="participantSearch">Participant</label>
+          <div class="combobox" data-combobox>
+            <div class="input-wrap participant-option-search">
+              <span class="input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              </span>
+              <input
+                class="input participant-combobox-input"
+                id="participantSearch"
+                type="search"
+                placeholder="Search existing participants..."
+                autocomplete="off"
+                data-combobox-input
+              />
+            </div>
+            <input type="hidden" id="participantId" th:field="*{participantId}" />
+            <div class="combobox-menu" data-combobox-menu>
+              <button
+                type="button"
+                class="combobox-option"
+                th:each="participant : ${participantOptions}"
+                th:data-value="${participant.id}"
+                th:data-label="${participant.name}"
+                th:data-meta="${participant.contactInfo}"
+                data-combobox-option
+              >
+                <span class="combobox-option-title" th:text="${participant.name}">Participant Name</span>
+                <span class="combobox-option-meta" th:text="${participant.contactInfo}">email: name@example.com</span>
+              </button>
+              <div class="combobox-empty" data-combobox-empty>No matching participants found.</div>
+            </div>
+          </div>
+          <div
+            class="field-error"
+            th:if="${#fields.hasErrors('participantId')}"
+            th:errors="*{participantId}"
+          >
+            Participant error
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="roleSearch">Role</label>
+          <div class="combobox" data-combobox>
+            <div class="input-wrap participant-option-search">
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+            <input
+              class="input participant-combobox-input"
+              id="roleSearch"
+              type="search"
+              placeholder="Search roles..."
+              autocomplete="off"
+              data-combobox-input
+            />
+          </div>
+            <input type="hidden" id="roleId" th:field="*{roleId}" />
+            <div class="combobox-menu" data-combobox-menu>
+              <button
+                type="button"
+                class="combobox-option"
+                th:each="role : ${roleOptions}"
+                th:data-value="${role.id}"
+                th:data-label="${role.name}"
+                data-combobox-option
+              >
+                <span class="combobox-option-title" th:text="${role.name}">Witness</span>
+              </button>
+              <div class="combobox-empty" data-combobox-empty>No matching roles found.</div>
+            </div>
+          </div>
+          <div class="field-error" th:if="${#fields.hasErrors('roleId')}" th:errors="*{roleId}">
+            Role error
+          </div>
+        </div>
+
+        <div class="status-modal-actions">
+          <a
+            th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}"
+            class="btn-light"
+            >Cancel</a
+          >
+          <button
+            class="btn-primary"
+            type="submit"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+          >
+            Add
+          </button>
+        </div>
+      </form>
+    </section>
+    <script>
+      document.querySelectorAll("[data-combobox]").forEach(combobox => {
+        const input = combobox.querySelector("[data-combobox-input]");
+        const hiddenInput = combobox.querySelector("input[type='hidden']");
+        const options = Array.from(combobox.querySelectorAll("[data-combobox-option]"));
+        const empty = combobox.querySelector("[data-combobox-empty]");
+
+        const closeMenu = () => combobox.classList.remove("combobox--open");
+        const openMenu = () => combobox.classList.add("combobox--open");
+
+        const filterOptions = () => {
+          const query = input.value.trim().toLowerCase();
+          let matches = 0;
+          hiddenInput.value = "";
+
+          if (query === "") {
+            options.forEach(option => (option.hidden = true));
+            empty.hidden = true;
+            closeMenu();
+            return;
+          }
+
+          options.forEach(option => {
+            const text = `${option.dataset.label || ""}`.toLowerCase();
+            const matched = text
+              .split(/\s+/)
+              .some(word => word.startsWith(query));
+            option.hidden = !matched;
+            if (matched) {
+              matches += 1;
+            }
+          });
+
+          empty.hidden = matches > 0;
+          openMenu();
+        };
+
+        options.forEach(option => (option.hidden = true));
+        empty.hidden = true;
+
+        input.addEventListener("input", filterOptions);
+        input.addEventListener("focus", () => {
+          if (input.value.trim() !== "") {
+            filterOptions();
+          }
+        });
+
+        options.forEach(option => {
+          option.addEventListener("click", () => {
+            hiddenInput.value = option.dataset.value;
+            input.value = option.dataset.label;
+            options.forEach(item => (item.hidden = false));
+            empty.hidden = true;
+            closeMenu();
+          });
+        });
+
+        const selected = options.find(option => option.dataset.value === hiddenInput.value);
+        if (selected) {
+          input.value = selected.dataset.label;
+        }
+
+        document.addEventListener("click", event => {
+          if (!combobox.contains(event.target)) {
+            closeMenu();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -5,6 +5,11 @@ spring:
   application:
     name: court-portal
 
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 22MB
+
   datasource:
     url: ${SQL_URL:jdbc:postgresql://localhost:5432/court}
     username: ${SQL_USER:court}
@@ -22,6 +27,7 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/}
       database: ${MONGODB_DATABASE:court}
+      uuid-representation: standard
 
     redis:
       host: ${REDIS_HOST:localhost}

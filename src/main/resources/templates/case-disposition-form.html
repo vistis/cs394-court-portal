@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Create Disposition - ${caseDetail.caseNumber}|">
+      Create Disposition
+    </title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app app--modal-open">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail modal-page-content">
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+        </div>
+
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <div class="detail-chips">
+              <span class="badge badge--red" th:text="${caseDetail.classification}">Criminal</span>
+              <span class="badge" th:classappend="${caseDetail.badgeClass}" th:text="${caseDetail.status}">Open</span>
+              <span class="badge badge--slate" th:text="${caseDetail.visibility}">Internal</span>
+            </div>
+            <h1 class="detail-title" th:text="|${caseDetail.caseNumber}: ${caseDetail.title}|">
+              CMS-2026-0001: Case Title
+            </h1>
+            <div class="detail-meta">
+              <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+              <span th:if="${caseDetail.filedDate != ''}">
+                Filed <span th:text="${caseDetail.filedDate}">Jan 01, 2026</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <nav class="detail-tabs" aria-label="Case sections">
+          <a class="detail-tab" th:href="@{/cases/{caseId}(caseId=${caseDetail.caseId})}">Overview</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}">Docket Sheet</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}">Documents</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}">Hearings</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}">Participants</a>
+          <a class="detail-tab detail-tab--active" th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}">Disposition</a>
+        </nav>
+
+        <section class="disposition-panel">
+          <h2 class="disposition-heading">Disposition</h2>
+          <div class="disposition-empty">
+            <h3>No disposition recorded</h3>
+            <p>Create a disposition to record the case outcome.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-scrim" aria-hidden="true"></div>
+
+    <section
+      class="status-modal disposition-modal"
+      role="dialog"
+      aria-labelledby="dispositionModalTitle"
+      aria-modal="true"
+    >
+      <div class="status-modal-head">
+        <div>
+          <h1 id="dispositionModalTitle" class="status-modal-title">
+            Create Disposition
+          </h1>
+        </div>
+        <a
+          class="modal-close"
+          th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+          aria-label="Close"
+          >&times;</a
+        >
+      </div>
+
+      <form
+        class="status-modal-form"
+        method="post"
+        th:action="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+        th:object="${createDispositionForm}"
+      >
+        <div class="alert alert--error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}">
+          Unable to create disposition.
+        </div>
+
+        <div class="notice notice--danger">
+          <span class="notice-icon">i</span>
+          <span>This will permanently close the case and record the final outcome.</span>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="outcomeTypeId">Outcome Type</label>
+          <select class="select" id="outcomeTypeId" th:field="*{outcomeTypeId}">
+            <option value="">Select outcome...</option>
+            <option
+              th:each="outcome : ${outcomes}"
+              th:value="${outcome.id}"
+              th:text="${outcome.name}"
+            ></option>
+          </select>
+          <div class="field-error" th:if="${#fields.hasErrors('outcomeTypeId')}" th:errors="*{outcomeTypeId}">
+            Outcome error
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="dispositionDate">Date</label>
+          <input class="input" id="dispositionDate" type="date" th:field="*{dispositionDate}" />
+          <div class="field-error" th:if="${#fields.hasErrors('dispositionDate')}" th:errors="*{dispositionDate}">
+            Date error
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="presidingJudge">Presiding Judge</label>
+          <input
+            class="input input--readonly"
+            id="presidingJudge"
+            type="text"
+            th:value="${caseDetail.assignedJudge.name}"
+            readonly
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="rulingSummary">Ruling Summary</label>
+          <textarea
+            class="input textarea"
+            id="rulingSummary"
+            rows="5"
+            th:field="*{rulingSummary}"
+            placeholder="Enter a summary of the final ruling..."
+          ></textarea>
+          <div class="field-error" th:if="${#fields.hasErrors('rulingSummary')}" th:errors="*{rulingSummary}">
+            Ruling summary error
+          </div>
+        </div>
+
+        <div class="status-modal-actions">
+          <a
+            th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+            class="btn-light"
+            >Cancel</a
+          >
+          <button class="btn-primary" type="submit" sec:authorize="hasAuthority('CASE_UPDATE')">
+            Save
+          </button>
+        </div>
+      </form>
+    </section>
+  </body>
+</html>

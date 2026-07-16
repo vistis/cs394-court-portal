@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Reschedule Hearing - ${caseDetail.caseNumber}|">
+      Reschedule Hearing
+    </title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app app--modal-open">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail modal-page-content">
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+        </div>
+
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <div class="detail-chips">
+              <span class="badge badge--red" th:text="${caseDetail.classification}">Criminal</span>
+              <span class="badge" th:classappend="${caseDetail.badgeClass}" th:text="${caseDetail.status}">Open</span>
+              <span class="badge badge--slate" th:text="${caseDetail.visibility}">Internal</span>
+            </div>
+            <h1 class="detail-title" th:text="|${caseDetail.caseNumber}: ${caseDetail.title}|">
+              CMS-2026-0001: Case Title
+            </h1>
+            <div class="detail-meta">
+              <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+              <span th:if="${caseDetail.filedDate != ''}">
+                Filed <span th:text="${caseDetail.filedDate}">Jan 01, 2026</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <nav class="detail-tabs" aria-label="Case sections">
+          <a class="detail-tab" th:href="@{/cases/{caseId}(caseId=${caseDetail.caseId})}">Overview</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}">Docket Sheet</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}">Documents</a>
+          <a class="detail-tab detail-tab--active" th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}">Hearings</a>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}"
+            >Participants</a
+          >
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+            >Disposition</a
+          >
+        </nav>
+
+        <div class="hearing-toolbar">
+          <form method="get" th:action="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}">
+            <select class="select hearing-filter" name="filter" disabled>
+              <option>Filter: Upcoming &amp; Past</option>
+            </select>
+          </form>
+
+          <a
+            class="btn-primary hearing-schedule"
+            th:href="@{/cases/{caseId}/hearings/new(caseId=${caseDetail.caseId})}"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+            >+ Schedule Hearing</a
+          >
+        </div>
+
+        <section class="hearing-section">
+          <h2 class="hearing-section-title">Upcoming Appearances</h2>
+          <div class="hearing-list">
+            <p class="table-empty" th:if="${#lists.isEmpty(upcomingHearings)}">
+              No upcoming hearings found.
+            </p>
+            <article class="hearing-card" th:each="hearing : ${upcomingHearings}">
+              <div class="hearing-date">
+                <span th:text="${hearing.month}">JUN</span>
+                <strong th:text="${hearing.day}">15</strong>
+              </div>
+              <div class="hearing-main">
+                <h3 th:text="${hearing.hearingType}">Pre-Trial Conference</h3>
+                <div class="hearing-meta">
+                  <span th:text="${hearing.timeRange}">10:00 AM - 11:30 AM</span>
+                  <span th:text="${hearing.courtroom}">Courtroom 4B</span>
+                  <span th:text="${hearing.judgeName}">Hon. Sarah Jenkins</span>
+                </div>
+              </div>
+              <div class="hearing-actions">
+                <span class="badge" th:classappend="${hearing.badgeClass}" th:text="${hearing.status}">
+                  Scheduled
+                </span>
+                <a
+                  class="btn-light btn-light--sm"
+                  th:href="@{/cases/{caseId}/hearings/{hearingId}/reschedule(caseId=${caseDetail.caseId}, hearingId=${hearing.hearingId})}"
+                  sec:authorize="hasAuthority('CASE_UPDATE')"
+                  >Reschedule</a
+                >
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="hearing-section">
+          <h2 class="hearing-section-title">Past Appearances</h2>
+          <div class="hearing-list">
+            <p class="table-empty" th:if="${#lists.isEmpty(pastHearings)}">
+              No past hearings found.
+            </p>
+            <article class="hearing-card hearing-card--muted" th:each="hearing : ${pastHearings}">
+              <div class="hearing-date">
+                <span th:text="${hearing.month}">JUN</span>
+                <strong th:text="${hearing.day}">02</strong>
+              </div>
+              <div class="hearing-main">
+                <h3 th:text="${hearing.hearingType}">Arraignment</h3>
+                <div class="hearing-meta">
+                  <span th:text="${hearing.timeRange}">09:00 AM - 09:30 AM</span>
+                  <span th:text="${hearing.courtroom}">Courtroom 4B</span>
+                  <span th:text="${hearing.judgeName}">Hon. Sarah Jenkins</span>
+                </div>
+              </div>
+              <span class="badge" th:classappend="${hearing.badgeClass}" th:text="${hearing.status}">
+                Completed
+              </span>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-scrim" aria-hidden="true"></div>
+
+    <section
+      class="status-modal hearing-reschedule-modal"
+      role="dialog"
+      aria-labelledby="rescheduleModalTitle"
+      aria-modal="true"
+    >
+      <div class="status-modal-head">
+        <div>
+          <h1 id="rescheduleModalTitle" class="status-modal-title">
+            Reschedule Hearing
+          </h1>
+          <p
+            class="status-modal-subtitle"
+            th:text="|${hearingReschedule.hearingType} for ${caseDetail.caseNumber}|"
+          >
+            Hearing type for case number
+          </p>
+        </div>
+        <a
+          class="modal-close"
+          th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}"
+          aria-label="Close"
+          >&times;</a
+        >
+      </div>
+
+      <form
+        class="status-modal-form"
+        method="post"
+        th:action="@{/cases/{caseId}/hearings/{hearingId}/reschedule(caseId=${caseDetail.caseId}, hearingId=${hearingReschedule.hearingId})}"
+        th:object="${rescheduleHearingForm}"
+      >
+        <div
+          class="alert alert--error"
+          th:if="${#fields.hasGlobalErrors()}"
+          th:each="err : ${#fields.globalErrors()}"
+          th:text="${err}"
+        >
+          Unable to reschedule hearing.
+        </div>
+
+        <div class="reschedule-current">
+          <span class="reschedule-current-icon" aria-hidden="true"></span>
+          <span>
+            Currently scheduled for:
+            <strong th:text="${hearingReschedule.currentSchedule}">
+              15 Jun 2026, 10:00 AM in Courtroom 4B
+            </strong>
+          </span>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label class="field-label" for="startAt">New Start Date &amp; Time</label>
+            <input class="input" id="startAt" type="datetime-local" th:field="*{startAt}" />
+            <div class="field-error" th:if="${#fields.hasErrors('startAt')}" th:errors="*{startAt}">
+              Start error
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="endAt">New End Date &amp; Time</label>
+            <input class="input" id="endAt" type="datetime-local" th:field="*{endAt}" />
+            <div class="field-error" th:if="${#fields.hasErrors('endAt')}" th:errors="*{endAt}">
+              End error
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="courtroomId">New Courtroom</label>
+          <select class="select" id="courtroomId" th:field="*{courtroomId}">
+            <option value="">Select courtroom...</option>
+            <option
+              th:each="courtroom : ${courtrooms}"
+              th:value="${courtroom.id}"
+              th:text="${courtroom.name}"
+            ></option>
+          </select>
+          <div
+            class="field-error"
+            th:if="${#fields.hasErrors('courtroomId')}"
+            th:errors="*{courtroomId}"
+          >
+            Courtroom error
+          </div>
+        </div>
+
+        <div class="status-modal-actions">
+          <a
+            th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}"
+            class="btn-light"
+            >Cancel</a
+          >
+          <button
+            class="btn-primary"
+            type="submit"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+          >
+            Confirm Reschedule
+          </button>
+        </div>
+      </form>
+    </section>
+  </body>
+</html>

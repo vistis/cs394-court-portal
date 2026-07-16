@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Participants - ${caseDetail.caseNumber}|">Participants</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <div class="alert alert--success" th:if="${successMessage}" th:text="${successMessage}">
+          Participant updated.
+        </div>
+
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+        </div>
+
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <div class="detail-chips">
+              <span class="badge badge--red" th:text="${caseDetail.classification}">Criminal</span>
+              <span class="badge" th:classappend="${caseDetail.badgeClass}" th:text="${caseDetail.status}">Open</span>
+              <span class="badge badge--slate" th:text="${caseDetail.visibility}">Internal</span>
+            </div>
+            <h1 class="detail-title" th:text="|${caseDetail.caseNumber}: ${caseDetail.title}|">
+              CMS-2026-0001: Case Title
+            </h1>
+            <div class="detail-meta">
+              <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+              <span th:if="${caseDetail.filedDate != ''}">
+                Filed <span th:text="${caseDetail.filedDate}">Jan 01, 2026</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <nav class="detail-tabs" aria-label="Case sections">
+          <a class="detail-tab" th:href="@{/cases/{caseId}(caseId=${caseDetail.caseId})}">Overview</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}">Docket Sheet</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}">Documents</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}">Hearings</a>
+          <a class="detail-tab detail-tab--active" href="#">Participants</a>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+            >Disposition</a
+          >
+        </nav>
+
+        <form
+          class="docket-toolbar participants-toolbar"
+          method="get"
+          th:action="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}"
+        >
+          <div class="input-wrap docket-search">
+            <span class="input-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+            <input class="input" type="search" name="query" placeholder="Search by name or role..." th:value="${query}" />
+          </div>
+
+          <select class="select docket-filter" name="roleId" onchange="this.form.submit()">
+            <option value="">Filter by: All Roles</option>
+            <option
+              th:each="role : ${roles}"
+              th:value="${role.id}"
+              th:text="|Filter by: ${role.name}|"
+              th:selected="${selectedRoleId != null && selectedRoleId == role.id}"
+            ></option>
+          </select>
+
+          <button class="btn-secondary" type="submit">Search</button>
+
+          <a
+            class="btn-primary docket-add"
+            th:href="@{/cases/{caseId}/participants/add(caseId=${caseDetail.caseId})}"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+            >+ Add Participant</a
+          >
+        </form>
+
+        <section class="table-card">
+          <div class="table-scroll">
+            <table class="data-table participants-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Contact Info</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${#lists.isEmpty(participants)}">
+                  <td colspan="4" class="table-empty">No participants found.</td>
+                </tr>
+                <tr th:each="participant : ${participants}">
+                  <td>
+                    <div class="participant-name" th:text="${participant.name}">
+                      Participant Name
+                    </div>
+                    <div class="participant-type" th:text="${participant.partyType}">
+                      Individual
+                    </div>
+                  </td>
+                  <td th:text="${participant.role}">Witness</td>
+                  <td th:text="${participant.contactInfo}">email: name@example.com</td>
+                  <td>
+                    <form
+                      method="post"
+                      th:action="@{/cases/{caseId}/participants/{participantId}/remove(caseId=${caseDetail.caseId}, participantId=${participant.participantId})}"
+                      sec:authorize="hasAuthority('CASE_UPDATE')"
+                    >
+                      <button class="icon-action" type="submit" title="Remove from case">
+                        Remove
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
