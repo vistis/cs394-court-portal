@@ -64,8 +64,16 @@
 
         <nav class="detail-tabs" aria-label="Case sections">
           <a class="detail-tab detail-tab--active" href="#">Overview</a>
-          <span class="detail-tab detail-tab--disabled">Docket Sheet</span>
-          <span class="detail-tab detail-tab--disabled">Documents</span>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}"
+            >Docket Sheet</a
+          >
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}"
+            >Documents</a
+          >
           <span class="detail-tab detail-tab--disabled">Hearings</span>
           <span class="detail-tab detail-tab--disabled">Participants</span>
           <span class="detail-tab detail-tab--disabled">Disposition</span>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|${documentDetail.title} - Court Panel|">Document Viewer</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body
+    class="app"
+    th:classappend="${showMotionStatusModal} ? ' app--modal-open' : ''"
+  >
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main
+        class="content content--detail"
+        th:classappend="${showMotionStatusModal} ? ' modal-page-content' : ''"
+      >
+        <div
+          class="alert alert--success"
+          th:if="${successMessage != null}"
+          th:text="${successMessage}"
+        >
+          Motion status updated successfully.
+        </div>
+
+        <div class="viewer-toolbar">
+          <a th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}">&lt; Back to Documents</a>
+          <a
+            class="btn-primary"
+            th:href="@{/cases/{caseId}/documents/{documentId}/download(caseId=${caseDetail.caseId}, documentId=${documentDetail.documentId})}"
+            >Download</a
+          >
+        </div>
+
+        <div class="document-viewer-grid">
+          <section class="document-preview">
+            <div
+              class="pdf-preview-shell"
+              th:if="${documentDetail.fileUrl != null and #strings.endsWith(#strings.toLowerCase(documentDetail.filePath), '.pdf')}"
+            >
+              <iframe
+                th:src="${documentDetail.fileUrl + '#toolbar=0&navpanes=0&scrollbar=0&page=1&zoom=page-width'}"
+                title="Document preview"
+              ></iframe>
+            </div>
+            <img
+              th:if="${documentDetail.fileUrl != null and (#strings.endsWith(#strings.toLowerCase(documentDetail.filePath), '.jpg') or #strings.endsWith(#strings.toLowerCase(documentDetail.filePath), '.jpeg'))}"
+              th:src="${documentDetail.fileUrl}"
+              alt="Document preview"
+            />
+            <div
+              class="preview-empty"
+              th:if="${documentDetail.fileUrl == null or (!#strings.endsWith(#strings.toLowerCase(documentDetail.filePath), '.pdf') and !#strings.endsWith(#strings.toLowerCase(documentDetail.filePath), '.jpg') and !#strings.endsWith(#strings.toLowerCase(documentDetail.filePath), '.jpeg'))}"
+            >
+              <h2 th:text="${documentDetail.title}">Document title</h2>
+              <p>Preview is available for browser-supported files. Use Download if this document cannot be previewed.</p>
+            </div>
+          </section>
+
+          <aside class="document-info-panel">
+            <h2>Document Info</h2>
+            <h3 th:text="${documentDetail.title}">Motion to Dismiss</h3>
+            <span class="badge" th:classappend="${documentDetail.badgeClass}" th:text="${documentDetail.documentTypeLabel}">Motion</span>
+
+            <dl class="info-list">
+              <dt>Case Number</dt>
+              <dd th:text="${documentDetail.caseNumber}">CMS-2026-0001</dd>
+              <dt>Submitted By</dt>
+              <dd th:text="${documentDetail.submittedBy}">J. Thompson</dd>
+              <dt>Uploaded At</dt>
+              <dd th:text="${documentDetail.uploadedAt}">Jul 16, 2026</dd>
+              <dt>Confidential</dt>
+              <dd th:text="${documentDetail.confidential ? 'Confidential' : 'No'}">No</dd>
+            </dl>
+
+            <div class="metadata-readout">
+              <h3>Additional Details</h3>
+
+              <div th:if="${documentDetail.documentType == 'Filing'}">
+                <p><strong>Filing Category:</strong> <span th:text="${documentDetail.metadata['filing_category'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Relief Sought:</strong> <span th:text="${documentDetail.metadata['relief_sought'] ?: 'Not recorded'}"></span></p>
+              </div>
+
+              <div th:if="${documentDetail.documentType == 'Motion'}">
+                <p><strong>Requested Action:</strong> <span th:text="${documentDetail.metadata['request_action'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Status:</strong> <span th:text="${documentDetail.metadata['status'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Argument Summary:</strong> <span th:text="${documentDetail.metadata['argument_summary'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Hearing Required:</strong> <span th:text="${documentDetail.metadata['hearing_required']}"></span></p>
+                <p><strong>Ruled By:</strong> <span th:text="${documentDetail.metadata['ruled_by_judge_id'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Ruled At:</strong> <span th:text="${documentDetail.metadata['ruled_at'] ?: 'Not recorded'}"></span></p>
+                <a
+                  class="btn-outline document-action-btn"
+                  th:href="@{/cases/{caseId}/documents/{documentId}/motion-status(caseId=${caseDetail.caseId}, documentId=${documentDetail.documentId})}"
+                  sec:authorize="hasAuthority('CASE_UPDATE')"
+                  >Update Motion Status</a
+                >
+              </div>
+
+              <div th:if="${documentDetail.documentType == 'Continuance'}">
+                <p><strong>Approved Motion:</strong> <span th:text="${documentDetail.metadata['approved_motion_id'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Original Hearing:</strong> <span th:text="${documentDetail.metadata['original_hearing_id'] ?: 'Not recorded'}"></span></p>
+                <p><strong>New Hearing:</strong> <span th:text="${documentDetail.metadata['new_hearing_id'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Reason:</strong> <span th:text="${documentDetail.metadata['reason'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Requested By Party:</strong> <span th:text="${documentDetail.metadata['requested_by_party'] ?: 'Not recorded'}"></span></p>
+              </div>
+
+              <div th:if="${documentDetail.documentType == 'Evidence'}">
+                <p><strong>Evidence Type:</strong> <span th:text="${documentDetail.metadata['evidence_type'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Exhibit Number:</strong> <span th:text="${documentDetail.metadata['exhibit_number'] ?: 'Not recorded'}"></span></p>
+                <h4>Chain of Custody</h4>
+                <div class="chain-readout" th:each="item : ${documentDetail.chainOfCustody}">
+                  <strong th:text="${item['handler_name']}">Handler</strong>
+                  <span th:text="|${item['action']} - ${item['location']}|">Collected - Office</span>
+                  <small th:text="${item['timestamp']}">Timestamp</small>
+                </div>
+              </div>
+
+              <div th:if="${documentDetail.documentType == 'Disposition'}">
+                <p><strong>Originating Disposition:</strong> <span th:text="${documentDetail.metadata['originating_disposition_id'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Sentence Terms:</strong> <span th:text="${documentDetail.metadata['sentence_terms'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Prejudice Status:</strong> <span th:text="${documentDetail.metadata['prejudice_status'] ?: 'Not recorded'}"></span></p>
+              </div>
+
+              <div th:if="${documentDetail.documentType == 'Appeal'}">
+                <p><strong>Target Disposition:</strong> <span th:text="${documentDetail.metadata['target_disposition_id'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Grounds for Appeal:</strong> <span th:text="${documentDetail.metadata['grounds_for_appeal'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Appellate Court Level:</strong> <span th:text="${documentDetail.metadata['appellate_court_level'] ?: 'Not recorded'}"></span></p>
+                <p><strong>Lower Court Record Verified:</strong> <span th:text="${documentDetail.metadata['lower_court_record_verified']}"></span></p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <div
+      class="modal-scrim"
+      th:if="${showMotionStatusModal}"
+      aria-hidden="true"
+    ></div>
+
+    <section
+      class="status-modal"
+      th:if="${showMotionStatusModal}"
+      role="dialog"
+      aria-labelledby="motionStatusModalTitle"
+      aria-modal="true"
+    >
+      <div class="status-modal-head">
+        <div>
+          <h1 id="motionStatusModalTitle" class="status-modal-title">
+            Update Motion Status
+          </h1>
+          <p
+            class="status-modal-subtitle"
+            th:text="|Document: ${documentDetail.title}|"
+          >
+            Document: Motion to Dismiss
+          </p>
+        </div>
+        <a
+          class="modal-close"
+          th:href="@{/cases/{caseId}/documents/{documentId}(caseId=${caseDetail.caseId}, documentId=${documentDetail.documentId})}"
+          aria-label="Close"
+          >×</a
+        >
+      </div>
+
+      <form
+        class="status-modal-form"
+        method="post"
+        th:action="@{/cases/{caseId}/documents/{documentId}/motion-status(caseId=${caseDetail.caseId}, documentId=${documentDetail.documentId})}"
+        th:object="${updateMotionStatusForm}"
+      >
+        <div
+          class="alert alert--error"
+          th:if="${#fields.hasGlobalErrors()}"
+          th:each="err : ${#fields.globalErrors()}"
+          th:text="${err}"
+        >
+          Unable to update motion status.
+        </div>
+
+        <div class="status-current status-current--modal">
+          <div>
+            <div class="field-label">Current Status</div>
+            <div class="status-current-line">
+              <span class="status-dot"></span>
+              <span th:text="${documentDetail.metadata['status'] ?: 'Pending'}">
+                Pending
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="status">New Status</label>
+          <select class="select" id="status" th:field="*{status}">
+            <option value="">Select status...</option>
+            <option
+              th:each="status : ${motionStatuses}"
+              th:value="${status.code}"
+              th:text="${status.label}"
+            ></option>
+          </select>
+          <div
+            class="field-error"
+            th:if="${#fields.hasErrors('status')}"
+            th:errors="*{status}"
+          >
+            Status error
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="ruledByJudgeId">Ruled By Judge</label>
+          <select class="select" id="ruledByJudgeId" th:field="*{ruledByJudgeId}">
+            <option value="">Unassigned</option>
+            <option
+              th:each="judge : ${judgeOptions}"
+              th:value="${judge.id}"
+              th:text="${judge.label}"
+            ></option>
+          </select>
+          <div
+            class="field-error"
+            th:if="${#fields.hasErrors('ruledByJudgeId')}"
+            th:errors="*{ruledByJudgeId}"
+          >
+            Judge error
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="ruledAt">Ruled Date</label>
+          <input class="input" id="ruledAt" type="date" th:field="*{ruledAt}" />
+        </div>
+
+        <div class="status-modal-actions">
+          <a
+            th:href="@{/cases/{caseId}/documents/{documentId}(caseId=${caseDetail.caseId}, documentId=${documentDetail.documentId})}"
+            class="btn-light"
+            >Cancel</a
+          >
+          <button
+            class="btn-primary"
+            type="submit"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </section>
+  </body>
+</html>

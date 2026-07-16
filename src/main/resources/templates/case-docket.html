@@ -76,7 +76,11 @@
             >Overview</a
           >
           <a class="detail-tab detail-tab--active" href="#">Docket Sheet</a>
-          <span class="detail-tab detail-tab--disabled">Documents</span>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}"
+            >Documents</a
+          >
           <span class="detail-tab detail-tab--disabled">Hearings</span>
           <span class="detail-tab detail-tab--disabled">Participants</span>
           <span class="detail-tab detail-tab--disabled">Disposition</span>
