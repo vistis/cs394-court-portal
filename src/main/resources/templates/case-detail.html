@@ -102,7 +102,11 @@
             th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}"
             >Participants</a
           >
-          <span class="detail-tab detail-tab--disabled">Disposition</span>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/disposition(caseId=${caseDetail.caseId})}"
+            >Disposition</a
+          >
         </nav>
 
         <div class="detail-grid">

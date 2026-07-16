@@ -22,11 +22,17 @@ import kh.edu.paragoniu.court_shared.entity.CaseClassification;
 import kh.edu.paragoniu.court_shared.entity.CaseJudge;
 import kh.edu.paragoniu.court_shared.entity.CaseJudgeId;
 import kh.edu.paragoniu.court_shared.entity.CaseStatus;
+import kh.edu.paragoniu.court_shared.entity.Disposition;
+import kh.edu.paragoniu.court_shared.entity.DispositionOutcome;
 import kh.edu.paragoniu.court_shared.entity.Docket;
 import kh.edu.paragoniu.court_shared.entity.Judge;
+import kh.edu.paragoniu.court_shared.entity.Appeal;
 import kh.edu.paragoniu.court_shared.repository.CaseClassificationRepository;
 import kh.edu.paragoniu.court_shared.repository.CaseJudgeRepository;
 import kh.edu.paragoniu.court_shared.repository.CaseRepository;
+import kh.edu.paragoniu.court_shared.repository.AppealRepository;
+import kh.edu.paragoniu.court_shared.repository.DispositionOutcomeRepository;
+import kh.edu.paragoniu.court_shared.repository.DispositionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -60,6 +66,9 @@ public class CaseService {
     private final CaseRepository caseRepository;
     private final CaseClassificationRepository classificationRepository;
     private final CaseJudgeRepository caseJudgeRepository;
+    private final DispositionRepository dispositionRepository;
+    private final DispositionOutcomeRepository dispositionOutcomeRepository;
+    private final AppealRepository appealRepository;
     private final MongoTemplate mongoTemplate;
 
     public CaseService(
@@ -67,12 +76,18 @@ public class CaseService {
         CaseRepository caseRepository,
         CaseClassificationRepository classificationRepository,
         CaseJudgeRepository caseJudgeRepository,
+        DispositionRepository dispositionRepository,
+        DispositionOutcomeRepository dispositionOutcomeRepository,
+        AppealRepository appealRepository,
         MongoTemplate mongoTemplate
     ) {
         this.entityManager = entityManager;
         this.caseRepository = caseRepository;
         this.classificationRepository = classificationRepository;
         this.caseJudgeRepository = caseJudgeRepository;
+        this.dispositionRepository = dispositionRepository;
+        this.dispositionOutcomeRepository = dispositionOutcomeRepository;
+        this.appealRepository = appealRepository;
         this.mongoTemplate = mongoTemplate;
     }
 
@@ -181,6 +196,17 @@ public class CaseService {
                 FilterOption.class
             )
             .getResultList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<FilterOption> findDispositionOutcomeOptions() {
+        return dispositionOutcomeRepository
+            .findAll(Sort.by(Sort.Direction.ASC, "outcomeTypeId"))
+            .stream()
+            .map(outcome ->
+                new FilterOption(outcome.getOutcomeTypeId(), outcome.getName())
+            )
+            .toList();
     }
 
     public Page<DocketEntryRow> findDocketEntries(
@@ -338,6 +364,31 @@ public class CaseService {
     }
 
     @Transactional(readOnly = true)
+    public DispositionTabView findDispositionTab(UUID caseId) {
+        ensureCaseExists(caseId);
+        DispositionView disposition = dispositionRepository
+            .findByCaseEntityCaseId(caseId)
+            .map(this::toDispositionView)
+            .orElse(null);
+
+        List<Appeal> appeals = appealRepository.findByOriginalCaseCaseId(caseId);
+        Appeal appeal = appeals.isEmpty() ? null : appeals.get(0);
+        String appellateCaseNumber = "";
+        String appellateCaseId = "";
+        if (appeal != null && appeal.getNewCase() != null) {
+            appellateCaseNumber = appeal.getNewCase().getCaseNumber();
+            appellateCaseId = appeal.getNewCase().getCaseId().toString();
+        }
+
+        return new DispositionTabView(
+            disposition,
+            appeal != null,
+            appellateCaseNumber,
+            appellateCaseId
+        );
+    }
+
+    @Transactional(readOnly = true)
     public CaseStatusSnapshot findStatusSnapshot(UUID caseId) {
         return entityManager
             .createQuery(
@@ -482,6 +533,150 @@ public class CaseService {
         return caseId;
     }
 
+    @Transactional
+    public UUID createDisposition(
+        UUID caseId,
+        CreateDispositionForm form,
+        UUID performedById
+    ) {
+        if (dispositionRepository.findByCaseEntityCaseId(caseId).isPresent()) {
+            throw new DispositionException(
+                null,
+                "This case already has a disposition."
+            );
+        }
+
+        Case caseEntity = caseRepository
+            .findById(caseId)
+            .orElseThrow(() -> new CaseDetailNotFoundException(caseId));
+        DispositionOutcome outcome = dispositionOutcomeRepository
+            .findById(form.getOutcomeTypeId())
+            .orElseThrow(() ->
+                new DispositionException(
+                    "outcomeTypeId",
+                    "Selected outcome does not exist."
+                )
+            );
+        Judge judge = findPresidingJudge(caseId);
+        if (judge == null) {
+            throw new DispositionException(
+                null,
+                "Assign a presiding judge before recording a disposition."
+            );
+        }
+
+        Instant effectiveAt = form
+            .getDispositionDate()
+            .atStartOfDay(DISPLAY_ZONE)
+            .toInstant();
+        Instant now = Instant.now();
+
+        Disposition disposition = new Disposition();
+        disposition.setCaseEntity(caseEntity);
+        disposition.setJudgeEntity(judge);
+        disposition.setOutcomeType(outcome);
+        disposition.setRulingDetails(form.getRulingSummary().trim());
+        disposition.setEffectiveAt(effectiveAt);
+        dispositionRepository.save(disposition);
+
+        CaseStatus disposedStatus = findStatusReference("DISPOSED");
+        setField(caseEntity, "status", disposedStatus);
+        setField(caseEntity, "closedAt", effectiveAt);
+        setField(caseEntity, "lastUpdatedAt", now);
+        caseRepository.save(caseEntity);
+
+        createAutomaticDocketEntry(
+            caseId,
+            "DISPOSITION",
+            "Disposition recorded: " + outcome.getName() + ".",
+            performedById,
+            now
+        );
+
+        return disposition.getDispositionId();
+    }
+
+    @Transactional
+    public UUID initiateAppeal(UUID originalCaseId, UUID performedById) {
+        Disposition disposition = dispositionRepository
+            .findByCaseEntityCaseId(originalCaseId)
+            .orElseThrow(() ->
+                new DispositionException(
+                    null,
+                    "Record a disposition before initiating an appeal."
+                )
+            );
+        if (!appealRepository.findByOriginalCaseCaseId(originalCaseId).isEmpty()) {
+            throw new DispositionException(
+                null,
+                "This case already has an appeal."
+            );
+        }
+
+        Case originalCase = disposition.getCaseEntity();
+        Instant now = Instant.now();
+        LocalDate filedDate = LocalDate.now(DISPLAY_ZONE);
+        String appellateCaseNumber = generateCaseNumber(filedDate);
+
+        Case appellateCase = new Case();
+        setField(appellateCase, "caseNumber", appellateCaseNumber);
+        setField(
+            appellateCase,
+            "title",
+            "Appeal of " +
+            originalCase.getCaseNumber() +
+            ": " +
+            originalCase.getTitle()
+        );
+        setField(
+            appellateCase,
+            "description",
+            "Appellate case created from " +
+            originalCase.getCaseNumber() +
+            ". " +
+            originalCase.getDescription()
+        );
+        setField(appellateCase, "status", findStatusReference("UNDER_APPEAL"));
+        setField(appellateCase, "classification", originalCase.getClassification());
+        setField(appellateCase, "isPublic", originalCase.isPublic());
+        setField(
+            appellateCase,
+            "filedAt",
+            filedDate.atStartOfDay(DISPLAY_ZONE).toInstant()
+        );
+        setField(appellateCase, "lastUpdatedAt", now);
+        caseRepository.saveAndFlush(appellateCase);
+
+        Appeal appeal = new Appeal();
+        appeal.setOriginalCase(originalCase);
+        appeal.setNewCase(appellateCase);
+        appeal.setStatus("INITIATED");
+        appealRepository.save(appeal);
+
+        createAutomaticDocketEntry(
+            originalCaseId,
+            "APPEAL",
+            "Appeal initiated. Appellate case " +
+            appellateCaseNumber +
+            " was created.",
+            performedById,
+            now
+        );
+        createAutomaticDocketEntry(
+            appellateCase.getCaseId(),
+            "FILING",
+            "Appellate case " +
+            appellateCaseNumber +
+            " was created from " +
+            originalCase.getCaseNumber() +
+            ".",
+            performedById,
+            now
+        );
+
+        return appellateCase.getCaseId();
+    }
+
     private CaseStatus findInitialStatusReference() {
         Integer statusId = entityManager
             .createQuery(
@@ -499,6 +694,28 @@ public class CaseService {
                 new CaseCreationException(
                     null,
                     "Initial case status FILING_OPEN is missing."
+                )
+            );
+        return entityManager.getReference(CaseStatus.class, statusId);
+    }
+
+    private CaseStatus findStatusReference(String statusName) {
+        Integer statusId = entityManager
+            .createQuery(
+                """
+                SELECT s.statusId
+                FROM CaseStatus s
+                WHERE s.name = :statusName
+                """,
+                Integer.class
+            )
+            .setParameter("statusName", statusName)
+            .getResultStream()
+            .findFirst()
+            .orElseThrow(() ->
+                new DispositionException(
+                    null,
+                    "Case status " + statusName + " is missing."
                 )
             );
         return entityManager.getReference(CaseStatus.class, statusId);
@@ -718,6 +935,26 @@ public class CaseService {
             .orElseGet(AssignedJudgeView::unassigned);
     }
 
+    private Judge findPresidingJudge(UUID caseId) {
+        return entityManager
+            .createQuery(
+                """
+                SELECT j
+                FROM CaseJudge cj
+                JOIN cj.judgeEntity j
+                WHERE cj.id.caseId = :caseId
+                ORDER BY CASE WHEN cj.isPresiding = true THEN 0 ELSE 1 END,
+                    cj.assignedAt DESC
+                """,
+                Judge.class
+            )
+            .setParameter("caseId", caseId)
+            .setMaxResults(1)
+            .getResultStream()
+            .findFirst()
+            .orElse(null);
+    }
+
     private AssignedGreffierView findAssignedGreffier(UUID caseId) {
         return entityManager
             .createQuery(
@@ -873,6 +1110,19 @@ public class CaseService {
             badgeClass(status),
             formatDate(projection.filedAt()),
             formatJudgeName(projection.judgeFirstName(), projection.judgeLastName())
+        );
+    }
+
+    private DispositionView toDispositionView(Disposition disposition) {
+        return new DispositionView(
+            disposition.getDispositionId(),
+            disposition.getOutcomeType().getName(),
+            formatDate(disposition.getEffectiveAt()),
+            disposition.getRulingDetails(),
+            formatJudgeName(
+                disposition.getJudgeEntity().getFirstName(),
+                disposition.getJudgeEntity().getLastName()
+            )
         );
     }
 

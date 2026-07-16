@@ -19,6 +19,9 @@ import kh.edu.paragoniu.court_portal.cases.CaseRow;
 import kh.edu.paragoniu.court_portal.cases.CaseService;
 import kh.edu.paragoniu.court_portal.cases.DocketActivityTypeOption;
 import kh.edu.paragoniu.court_portal.cases.DocketEntryRow;
+import kh.edu.paragoniu.court_portal.cases.DispositionTabView;
+import kh.edu.paragoniu.court_portal.cases.DispositionView;
+import kh.edu.paragoniu.court_portal.cases.FilterOption;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.data.domain.PageImpl;
@@ -135,6 +138,57 @@ class CaseControllerTest {
             .perform(get("/cases/not-a-uuid/docket"))
             .andExpect(status().isNotFound())
             .andExpect(view().name("case-not-found"));
+    }
+
+    @Test
+    void dispositionTabRendersEmptyStateForExistingCase() throws Exception {
+        UUID caseId = UUID.randomUUID();
+        when(caseService.findDetail(caseId)).thenReturn(detail(caseId));
+        when(caseService.findDispositionTab(caseId))
+            .thenReturn(new DispositionTabView(null, false, "", ""));
+
+        mockMvc()
+            .perform(get("/cases/{caseId}/disposition", caseId))
+            .andExpect(status().isOk())
+            .andExpect(view().name("case-disposition"))
+            .andExpect(model().attributeExists("caseDetail", "dispositionTab"));
+    }
+
+    @Test
+    void newDispositionFormRendersOutcomeOptions() throws Exception {
+        UUID caseId = UUID.randomUUID();
+        when(caseService.findDetail(caseId)).thenReturn(detail(caseId));
+        when(caseService.findDispositionTab(caseId))
+            .thenReturn(
+                new DispositionTabView(
+                    new DispositionView(
+                        UUID.randomUUID(),
+                        "Guilty Verdict",
+                        "Jul 16, 2026",
+                        "Final ruling.",
+                        "Hon. Sarah Jenkins"
+                    ),
+                    false,
+                    "",
+                    ""
+                )
+            );
+        when(caseService.findDispositionOutcomeOptions())
+            .thenReturn(List.of(new FilterOption(1, "Guilty Verdict")));
+
+        mockMvc()
+            .perform(get("/cases/{caseId}/disposition/new", caseId))
+            .andExpect(status().isOk())
+            .andExpect(view().name("case-disposition-form"))
+            .andExpect(
+                model()
+                    .attributeExists(
+                        "caseDetail",
+                        "dispositionTab",
+                        "createDispositionForm",
+                        "outcomes"
+                    )
+            );
     }
 
     private MockMvc mockMvc() {

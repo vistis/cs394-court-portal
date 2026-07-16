@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Disposition - ${caseDetail.caseNumber}|">Disposition</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('cases')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <div class="alert alert--success" th:if="${successMessage}" th:text="${successMessage}">
+          Disposition recorded successfully.
+        </div>
+
+        <div class="breadcrumb">
+          <a th:href="@{/cases}">Cases</a>
+          <span>&gt;</span>
+          <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+        </div>
+
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <div class="detail-chips">
+              <span class="badge badge--red" th:text="${caseDetail.classification}">Criminal</span>
+              <span class="badge" th:classappend="${caseDetail.badgeClass}" th:text="${caseDetail.status}">Open</span>
+              <span class="badge badge--slate" th:text="${caseDetail.visibility}">Internal</span>
+            </div>
+            <h1 class="detail-title" th:text="|${caseDetail.caseNumber}: ${caseDetail.title}|">
+              CMS-2026-0001: Case Title
+            </h1>
+            <div class="detail-meta">
+              <span th:text="${caseDetail.caseNumber}">CMS-2026-0001</span>
+              <span th:if="${caseDetail.filedDate != ''}">
+                Filed <span th:text="${caseDetail.filedDate}">Jan 01, 2026</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <nav class="detail-tabs" aria-label="Case sections">
+          <a class="detail-tab" th:href="@{/cases/{caseId}(caseId=${caseDetail.caseId})}">Overview</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}">Docket Sheet</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}">Documents</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}">Hearings</a>
+          <a class="detail-tab" th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}">Participants</a>
+          <a class="detail-tab detail-tab--active" href="#">Disposition</a>
+        </nav>
+
+        <section class="disposition-panel">
+          <h2 class="disposition-heading">Disposition</h2>
+
+          <div class="disposition-empty" th:if="${!dispositionTab.hasDisposition()}">
+            <h3>No disposition recorded</h3>
+            <p>Create a disposition to record the case outcome.</p>
+            <a
+              class="btn-primary"
+              th:href="@{/cases/{caseId}/disposition/new(caseId=${caseDetail.caseId})}"
+              sec:authorize="hasAuthority('CASE_UPDATE')"
+              >+ Create disposition</a
+            >
+          </div>
+
+          <article class="disposition-summary" th:if="${dispositionTab.hasDisposition()}">
+            <div class="disposition-body">
+              <div class="disposition-title-row">
+                <span class="badge badge--gray" th:text="${dispositionTab.disposition.outcome}">
+                  Settled
+                </span>
+                <span class="disposition-date" th:text="|• ${dispositionTab.disposition.dispositionDate}|">
+                  • Nov 05, 2023
+                </span>
+              </div>
+              <p th:text="${dispositionTab.disposition.rulingSummary}">
+                Ruling summary.
+              </p>
+              <strong th:text="|Presiding: ${dispositionTab.disposition.presidingJudge}|">
+                Presiding: Hon. Sarah Jenkins
+              </strong>
+            </div>
+
+            <a
+              class="btn-danger-outline"
+              th:if="${!dispositionTab.appealExists}"
+              th:href="@{/cases/{caseId}/appeal/new(caseId=${caseDetail.caseId})}"
+              sec:authorize="hasAuthority('CASE_CREATE')"
+              >File appeal</a
+            >
+            <a
+              class="btn-light"
+              th:if="${dispositionTab.appealExists and dispositionTab.appellateCaseId != ''}"
+              th:href="@{/cases/{caseId}(caseId=${dispositionTab.appellateCaseId})}"
+              th:text="|View appeal ${dispositionTab.appellateCaseNumber}|"
+              >View appeal</a
+            >
+          </article>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

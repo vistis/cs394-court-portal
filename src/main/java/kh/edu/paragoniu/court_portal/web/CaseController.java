@@ -8,9 +8,11 @@ import kh.edu.paragoniu.court_portal.cases.CaseCreationException;
 import kh.edu.paragoniu.court_portal.cases.CaseDetailNotFoundException;
 import kh.edu.paragoniu.court_portal.cases.CaseRow;
 import kh.edu.paragoniu.court_portal.cases.CaseService;
+import kh.edu.paragoniu.court_portal.cases.CreateDispositionForm;
 import kh.edu.paragoniu.court_portal.cases.CreateCaseForm;
 import kh.edu.paragoniu.court_portal.cases.CreateDocketEntryForm;
 import kh.edu.paragoniu.court_portal.cases.DocketEntryException;
+import kh.edu.paragoniu.court_portal.cases.DispositionException;
 import kh.edu.paragoniu.court_portal.cases.StatusUpdateException;
 import kh.edu.paragoniu.court_portal.cases.UpdateCaseStatusForm;
 import kh.edu.paragoniu.court_portal.security.GreffierUserDetails;
@@ -162,6 +164,153 @@ public class CaseController {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             model.addAttribute("activeNav", "cases");
             return "case-not-found";
+        }
+    }
+
+    @GetMapping("/cases/{caseId}/disposition")
+    public String disposition(
+        @PathVariable String caseId,
+        Model model,
+        HttpServletResponse response
+    ) {
+        try {
+            UUID parsedCaseId = UUID.fromString(caseId);
+            addDispositionModel(model, parsedCaseId);
+            return "case-disposition";
+        } catch (IllegalArgumentException | CaseDetailNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        }
+    }
+
+    @GetMapping("/cases/{caseId}/disposition/new")
+    public String newDisposition(
+        @PathVariable String caseId,
+        Model model,
+        HttpServletResponse response
+    ) {
+        try {
+            UUID parsedCaseId = UUID.fromString(caseId);
+            if (!model.containsAttribute("createDispositionForm")) {
+                model.addAttribute(
+                    "createDispositionForm",
+                    new CreateDispositionForm()
+                );
+            }
+            addDispositionFormModel(model, parsedCaseId);
+            return "case-disposition-form";
+        } catch (IllegalArgumentException | CaseDetailNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        }
+    }
+
+    @PostMapping("/cases/{caseId}/disposition")
+    public String createDisposition(
+        @PathVariable String caseId,
+        @Valid @ModelAttribute("createDispositionForm") CreateDispositionForm form,
+        BindingResult bindingResult,
+        Model model,
+        RedirectAttributes redirectAttributes,
+        HttpServletResponse response,
+        @AuthenticationPrincipal GreffierUserDetails user
+    ) {
+        UUID parsedCaseId;
+        try {
+            parsedCaseId = UUID.fromString(caseId);
+        } catch (IllegalArgumentException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        }
+
+        if (!bindingResult.hasErrors()) {
+            try {
+                caseService.createDisposition(
+                    parsedCaseId,
+                    form,
+                    user == null ? null : user.getUserId()
+                );
+                redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Disposition recorded successfully."
+                );
+                return "redirect:/cases/" + parsedCaseId + "/disposition";
+            } catch (CaseDetailNotFoundException ex) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                model.addAttribute("activeNav", "cases");
+                return "case-not-found";
+            } catch (DispositionException ex) {
+                if (ex.getFieldName() == null) {
+                    bindingResult.reject("disposition.create.failed", ex.getMessage());
+                } else {
+                    bindingResult.rejectValue(
+                        ex.getFieldName(),
+                        "disposition.create.failed",
+                        ex.getMessage()
+                    );
+                }
+            }
+        }
+
+        addDispositionFormModel(model, parsedCaseId);
+        return "case-disposition-form";
+    }
+
+    @GetMapping("/cases/{caseId}/appeal/new")
+    public String newAppeal(
+        @PathVariable String caseId,
+        Model model,
+        HttpServletResponse response
+    ) {
+        try {
+            UUID parsedCaseId = UUID.fromString(caseId);
+            addAppealFormModel(model, parsedCaseId);
+            return "case-appeal-form";
+        } catch (IllegalArgumentException | CaseDetailNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        }
+    }
+
+    @PostMapping("/cases/{caseId}/appeal")
+    public String createAppeal(
+        @PathVariable String caseId,
+        Model model,
+        RedirectAttributes redirectAttributes,
+        HttpServletResponse response,
+        @AuthenticationPrincipal GreffierUserDetails user
+    ) {
+        UUID parsedCaseId;
+        try {
+            parsedCaseId = UUID.fromString(caseId);
+        } catch (IllegalArgumentException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        }
+
+        try {
+            UUID appellateCaseId = caseService.initiateAppeal(
+                parsedCaseId,
+                user == null ? null : user.getUserId()
+            );
+            redirectAttributes.addFlashAttribute(
+                "successMessage",
+                "Appellate case created successfully."
+            );
+            return "redirect:/cases/" + appellateCaseId;
+        } catch (CaseDetailNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        } catch (DispositionException ex) {
+            model.addAttribute("appealError", ex.getMessage());
+            addAppealFormModel(model, parsedCaseId);
+            return "case-appeal-form";
         }
     }
 
@@ -388,5 +537,27 @@ public class CaseController {
             "entryTimestampDisplay",
             caseService.formatCurrentTimestamp()
         );
+    }
+
+    private void addDispositionModel(Model model, UUID caseId) {
+        model.addAttribute("caseDetail", caseService.findDetail(caseId));
+        model.addAttribute(
+            "dispositionTab",
+            caseService.findDispositionTab(caseId)
+        );
+        model.addAttribute("successMessage", model.asMap().get("successMessage"));
+        model.addAttribute("activeNav", "cases");
+    }
+
+    private void addDispositionFormModel(Model model, UUID caseId) {
+        addDispositionModel(model, caseId);
+        model.addAttribute(
+            "outcomes",
+            caseService.findDispositionOutcomeOptions()
+        );
+    }
+
+    private void addAppealFormModel(Model model, UUID caseId) {
+        addDispositionModel(model, caseId);
     }
 }
