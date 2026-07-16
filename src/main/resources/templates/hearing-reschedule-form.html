@@ -49,7 +49,11 @@
           <a class="detail-tab" th:href="@{/cases/{caseId}/docket(caseId=${caseDetail.caseId})}">Docket Sheet</a>
           <a class="detail-tab" th:href="@{/cases/{caseId}/documents(caseId=${caseDetail.caseId})}">Documents</a>
           <a class="detail-tab detail-tab--active" th:href="@{/cases/{caseId}/hearings(caseId=${caseDetail.caseId})}">Hearings</a>
-          <span class="detail-tab detail-tab--disabled">Participants</span>
+          <a
+            class="detail-tab"
+            th:href="@{/cases/{caseId}/participants(caseId=${caseDetail.caseId})}"
+            >Participants</a
+          >
           <span class="detail-tab detail-tab--disabled">Disposition</span>
         </nav>
 
