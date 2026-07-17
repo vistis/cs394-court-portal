@@ -1078,6 +1078,35 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* Hearing Details subtitle (case reference line under the hero title) */
+.detail-subtitle {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* Facts grid variants used by the Hearing Details card */
+.detail-facts--plain {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.detail-facts--3col {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 720px) {
+  .detail-facts--3col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A bordered table sitting inside a detail panel (e.g. Continuance History) */
+.table-card--flush {
+  margin-top: 18px;
+}
+
 .detail-aside {
   display: flex;
   flex-direction: column;

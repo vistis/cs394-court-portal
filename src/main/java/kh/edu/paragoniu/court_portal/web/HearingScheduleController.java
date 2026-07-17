@@ -1,5 +1,6 @@
 package kh.edu.paragoniu.court_portal.web;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
@@ -11,6 +12,7 @@ import kh.edu.paragoniu.court_portal.cases.ScheduleHearingForm;
 import kh.edu.paragoniu.court_portal.hearings.CaseLookupResult;
 import kh.edu.paragoniu.court_portal.hearings.CaseLookupService;
 import kh.edu.paragoniu.court_portal.hearings.GlobalHearingForm;
+import kh.edu.paragoniu.court_portal.hearings.HearingDetailView;
 import kh.edu.paragoniu.court_portal.hearings.HearingScheduleRow;
 import kh.edu.paragoniu.court_portal.hearings.HearingScheduleService;
 import kh.edu.paragoniu.court_portal.security.GreffierUserDetails;
@@ -81,6 +83,26 @@ public class HearingScheduleController {
         model.addAttribute("toDate", toDate);
         model.addAttribute("activeNav", "hearings");
         return "hearings";
+    }
+
+    @GetMapping("/hearings/{hearingId}")
+    public String hearingDetail(
+        @org.springframework.web.bind.annotation.PathVariable String hearingId,
+        Model model,
+        HttpServletResponse response
+    ) {
+        try {
+            HearingDetailView hearing = hearingScheduleService.findDetail(
+                UUID.fromString(hearingId)
+            );
+            model.addAttribute("hearing", hearing);
+            model.addAttribute("activeNav", "hearings");
+            return "hearing-detail";
+        } catch (IllegalArgumentException | CaseDetailNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "hearings");
+            return "case-not-found";
+        }
     }
 
     @GetMapping("/hearings/new")

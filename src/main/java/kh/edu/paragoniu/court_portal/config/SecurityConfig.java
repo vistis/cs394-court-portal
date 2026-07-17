@@ -36,6 +36,8 @@ public class SecurityConfig {
                     .hasAuthority("CASE_UPDATE")
                     .requestMatchers(HttpMethod.POST, "/hearings")
                     .hasAuthority("CASE_UPDATE")
+                    .requestMatchers(HttpMethod.GET, "/hearings/*")
+                    .hasAuthority("CASE_VIEW")
                     .requestMatchers(HttpMethod.GET, "/cases/new")
                     .hasAuthority("CASE_CREATE")
                     .requestMatchers(HttpMethod.POST, "/cases")

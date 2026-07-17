@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Hearing Details - ${hearing.caseNumber}|">
+      Hearing Details - Court Panel
+    </title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('hearings')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <span>Court Operations</span>
+          <span>&gt;</span>
+          <a th:href="@{/hearings}">Hearings</a>
+          <span>&gt;</span>
+          <span>Hearing Details</span>
+        </nav>
+
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <h1 class="detail-title">Hearing Details</h1>
+            <p class="detail-subtitle">
+              Case
+              <a
+                class="cell-link"
+                th:href="@{/cases/{caseId}(caseId=${hearing.caseId})}"
+                th:text="${hearing.caseNumber}"
+                >CR-2026-0881</a
+              ><span th:text="|: ${hearing.caseTitle}|">: State vs. Henderson</span>
+            </p>
+          </div>
+
+          <a
+            class="btn-primary"
+            th:href="@{/cases/{caseId}/hearings/{hearingId}/reschedule(caseId=${hearing.caseId}, hearingId=${hearing.hearingId})}"
+            sec:authorize="hasAuthority('CASE_UPDATE')"
+          >
+            Reschedule
+          </a>
+        </section>
+
+        <section class="detail-panel">
+          <dl class="detail-facts detail-facts--plain detail-facts--3col">
+            <div>
+              <dt>Hearing Type</dt>
+              <dd th:text="${hearing.hearingType}">Pre-Trial Conference</dd>
+            </div>
+            <div>
+              <dt>Courtroom</dt>
+              <dd th:text="${hearing.courtroom}">Courtroom 4B</dd>
+            </div>
+            <div>
+              <dt>Current Status</dt>
+              <dd>
+                <span
+                  class="badge"
+                  th:classappend="${hearing.badgeClass}"
+                  th:text="${hearing.status}"
+                  >Scheduled</span
+                >
+              </dd>
+            </div>
+            <div>
+              <dt>Start Time</dt>
+              <dd th:text="${hearing.startTime}">15 Jun 2026, 10:00 AM</dd>
+            </div>
+            <div>
+              <dt>End Time</dt>
+              <dd th:text="${hearing.endTime}">15 Jun 2026, 11:30 AM</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="detail-panel">
+          <h2 class="detail-panel-title">Continuance History</h2>
+          <div class="table-card table-card--flush">
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Original Date</th>
+                    <th>New Date</th>
+                    <th>Reason</th>
+                    <th>Requested By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="4" class="table-empty">
+                      No continuances recorded for this hearing yet.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
