@@ -8,6 +8,7 @@ public record HearingDetailView(
     String caseTitle,
     String hearingType,
     String courtroom,
+    Integer courtroomId,
     String status,
     String badgeClass,
     String startTime,

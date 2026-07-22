@@ -3,6 +3,7 @@ package kh.edu.paragoniu.court_portal.hearings;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -33,9 +34,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class HearingScheduleService {
 
+    private static final ZoneId DISPLAY_ZONE = ZoneId.of("Asia/Phnom_Penh");
+
     private static final DateTimeFormatter DT_FMT = DateTimeFormatter
         .ofPattern("dd MMM yyyy, hh:mm a", Locale.ENGLISH)
-        .withZone(ZoneOffset.UTC);
+        .withZone(DISPLAY_ZONE);
 
     private final EntityManager entityManager;
     private final HearingTypeRepository hearingTypeRepository;
@@ -132,6 +135,7 @@ public class HearingScheduleService {
             caseEntity.getTitle(),
             hearing.getHearingType().getName(),
             hearing.getCourtroom().getRoomNumber(),
+            hearing.getCourtroom().getCourtroomId(),
             prettyStatus(hearing.getStatus()),
             badgeClass(hearing.getStatus()),
             DT_FMT.format(hearing.getStartAt()),
@@ -176,7 +180,7 @@ public class HearingScheduleService {
 
     private String badgeClass(String status) {
         return switch (status == null ? "" : status.toUpperCase(Locale.ENGLISH)) {
-            case "SCHEDULED" -> "badge--green";
+            case "SCHEDULED" -> "badge--blue";
             case "COMPLETED" -> "badge--gray";
             case "ADJOURNED" -> "badge--amber";
             case "CANCELLED" -> "badge--red";

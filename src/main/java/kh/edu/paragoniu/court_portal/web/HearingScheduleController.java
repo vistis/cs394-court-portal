@@ -8,6 +8,7 @@ import java.util.UUID;
 import kh.edu.paragoniu.court_portal.cases.CaseDetailNotFoundException;
 import kh.edu.paragoniu.court_portal.cases.HearingScheduleException;
 import kh.edu.paragoniu.court_portal.cases.HearingService;
+import kh.edu.paragoniu.court_portal.cases.RescheduleHearingForm;
 import kh.edu.paragoniu.court_portal.cases.ScheduleHearingForm;
 import kh.edu.paragoniu.court_portal.hearings.CaseLookupResult;
 import kh.edu.paragoniu.court_portal.hearings.CaseLookupService;
@@ -27,6 +28,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -87,22 +89,92 @@ public class HearingScheduleController {
 
     @GetMapping("/hearings/{hearingId}")
     public String hearingDetail(
-        @org.springframework.web.bind.annotation.PathVariable String hearingId,
+        @PathVariable String hearingId,
         Model model,
         HttpServletResponse response
     ) {
+        HearingDetailView hearing;
         try {
-            HearingDetailView hearing = hearingScheduleService.findDetail(
-                UUID.fromString(hearingId)
-            );
-            model.addAttribute("hearing", hearing);
-            model.addAttribute("activeNav", "hearings");
-            return "hearing-detail";
+            hearing = hearingScheduleService.findDetail(UUID.fromString(hearingId));
         } catch (IllegalArgumentException | CaseDetailNotFoundException ex) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             model.addAttribute("activeNav", "hearings");
             return "case-not-found";
         }
+
+        if (!model.containsAttribute("rescheduleForm")) {
+            RescheduleHearingForm form = new RescheduleHearingForm();
+            form.setCourtroomId(hearing.courtroomId());
+            model.addAttribute("rescheduleForm", form);
+        }
+        addDetailModel(model, hearing, false);
+        return "hearing-detail";
+    }
+
+    @PostMapping("/hearings/{hearingId}/reschedule")
+    public String reschedule(
+        @PathVariable String hearingId,
+        @Valid @ModelAttribute("rescheduleForm") RescheduleHearingForm form,
+        BindingResult binding,
+        @AuthenticationPrincipal GreffierUserDetails user,
+        RedirectAttributes redirectAttributes,
+        Model model,
+        HttpServletResponse response
+    ) {
+        HearingDetailView hearing;
+        UUID parsedHearingId;
+        try {
+            parsedHearingId = UUID.fromString(hearingId);
+            hearing = hearingScheduleService.findDetail(parsedHearingId);
+        } catch (IllegalArgumentException | CaseDetailNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "hearings");
+            return "case-not-found";
+        }
+
+        if (!binding.hasErrors()) {
+            try {
+                hearingService.rescheduleHearing(
+                    UUID.fromString(hearing.caseId()),
+                    parsedHearingId,
+                    form,
+                    user == null ? null : user.getUserId()
+                );
+                redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Hearing rescheduled successfully."
+                );
+                return "redirect:/hearings/" + parsedHearingId;
+            } catch (CaseDetailNotFoundException ex) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                model.addAttribute("activeNav", "hearings");
+                return "case-not-found";
+            } catch (HearingScheduleException ex) {
+                if (ex.getFieldName() == null) {
+                    binding.reject("hearing.reschedule.failed", ex.getMessage());
+                } else {
+                    binding.rejectValue(
+                        ex.getFieldName(),
+                        "hearing.reschedule.failed",
+                        ex.getMessage()
+                    );
+                }
+            }
+        }
+
+        addDetailModel(model, hearing, true);
+        return "hearing-detail";
+    }
+
+    private void addDetailModel(
+        Model model,
+        HearingDetailView hearing,
+        boolean openReschedule
+    ) {
+        model.addAttribute("hearing", hearing);
+        model.addAttribute("courtrooms", hearingService.findCourtroomOptions());
+        model.addAttribute("openReschedule", openReschedule);
+        model.addAttribute("activeNav", "hearings");
     }
 
     @GetMapping("/hearings/new")

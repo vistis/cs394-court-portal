@@ -1078,9 +1078,136 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* Hearing Details subtitle (case reference line under the hero title) */
+/* Narrower, centered detail column so cards read as proportioned, not stretched */
+.content--narrow {
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Hearing Details header sits on the plain page background (no card) */
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.detail-header-main {
+  min-width: 0;
+}
+
+/* Compact filled action button used in the Hearing Details header */
+.btn-reschedule {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  background: #000;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-reschedule:hover {
+  background: #1a1a1a;
+}
+
+/* ===================== Modal ===================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 64px 20px;
+  background: rgba(15, 23, 42, 0.45);
+  overflow-y: auto;
+}
+
+.modal-overlay.is-open {
+  display: flex;
+}
+
+.modal {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.modal-close {
+  display: inline-flex;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: var(--text-strong);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+}
+
+.modal-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #eff4fb;
+  border: 1px solid #d6e3f3;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1e40af;
+}
+
+.modal-info svg {
+  flex: none;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* Hearing Details subtitle (case reference line under the title) */
 .detail-subtitle {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-size: 14px;
   color: var(--text);
 }
