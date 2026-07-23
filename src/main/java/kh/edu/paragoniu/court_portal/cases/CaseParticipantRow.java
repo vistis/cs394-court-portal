@@ -8,4 +8,4 @@ public record CaseParticipantRow(
     String partyType,
     String role,
     String contactInfo
-) {}
+) implements java.io.Serializable {}

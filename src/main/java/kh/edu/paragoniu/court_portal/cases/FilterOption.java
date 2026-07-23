@@ -1,3 +1,3 @@
 package kh.edu.paragoniu.court_portal.cases;
 
-public record FilterOption(Integer id, String name) {}
+public record FilterOption(Integer id, String name) implements java.io.Serializable {}

@@ -10,4 +10,4 @@ public record HearingScheduleRow(
     String endTime,
     String status,
     String badgeClass
-) {}
+) implements java.io.Serializable {}

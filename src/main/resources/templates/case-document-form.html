@@ -266,60 +266,6 @@
       </main>
     </div>
 
-    <script>
-      (function () {
-        var typeSelect = document.getElementById('documentType');
-        var sections = Array.prototype.slice.call(document.querySelectorAll('[data-document-section]'));
-
-        function refreshSections() {
-          var selected = typeSelect ? typeSelect.value : 'Filing';
-          sections.forEach(function (section) {
-            section.hidden = section.getAttribute('data-document-section') !== selected;
-          });
-        }
-
-        function syncHandlerNames(scope) {
-          Array.prototype.slice.call((scope || document).querySelectorAll('.chain-handler')).forEach(function (select) {
-            var hidden = select.closest('td').querySelector('.chain-handler-name');
-            if (hidden) {
-              hidden.value = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : '';
-            }
-            select.addEventListener('change', function () {
-              if (hidden) {
-                hidden.value = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : '';
-              }
-            });
-          });
-        }
-
-        var addButton = document.getElementById('addChainRow');
-        if (addButton) {
-          addButton.addEventListener('click', function () {
-            var body = document.querySelector('#chainTable tbody');
-            var first = body.querySelector('tr');
-            if (!first) return;
-            var row = first.cloneNode(true);
-            var index = body.querySelectorAll('tr').length;
-            Array.prototype.slice.call(row.querySelectorAll('input, select')).forEach(function (input) {
-              input.name = input.name.replace(/chainOfCustody\[\d+\]/, 'chainOfCustody[' + index + ']');
-              input.id = input.id ? input.id.replace(/chainOfCustody\d+/, 'chainOfCustody' + index) : input.id;
-              if (input.tagName === 'SELECT') {
-                input.selectedIndex = 0;
-              } else {
-                input.value = '';
-              }
-            });
-            body.appendChild(row);
-            syncHandlerNames(row);
-          });
-        }
-
-        if (typeSelect) {
-          typeSelect.addEventListener('change', refreshSections);
-        }
-        refreshSections();
-        syncHandlerNames(document);
-      })();
-    </script>
+    <script src="/js/script.js"></script>
   </body>
 </html>

@@ -6,4 +6,4 @@ public record DocketEntryRow(
     String badgeClass,
     String description,
     String filedBy
-) {}
+) implements java.io.Serializable {}

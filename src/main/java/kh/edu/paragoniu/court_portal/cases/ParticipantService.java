@@ -115,6 +115,7 @@ public class ParticipantService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
     public void addParticipant(UUID caseId, AddCaseParticipantForm form) {
         Case caseEntity = caseRepository
             .findById(caseId)
@@ -164,6 +165,7 @@ public class ParticipantService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
     public void removeParticipant(UUID caseId, UUID participantId) {
         ensureCaseExists(caseId);
         CaseParticipantId id = new CaseParticipantId(caseId, participantId);

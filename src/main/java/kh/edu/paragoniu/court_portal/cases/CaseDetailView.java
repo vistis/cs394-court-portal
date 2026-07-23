@@ -16,4 +16,4 @@ public record CaseDetailView(
     String visibility,
     AssignedJudgeView assignedJudge,
     AssignedGreffierView assignedGreffier
-) {}
+) implements java.io.Serializable {}

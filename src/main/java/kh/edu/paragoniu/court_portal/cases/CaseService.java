@@ -136,7 +136,7 @@ public class CaseService {
             LEFT JOIN cj.judgeEntity j
             """ +
             whereClause +
-            " ORDER BY c.filedAt DESC",
+            " ORDER BY c.filedAt DESC, c.caseId DESC",
             CaseRowProjection.class
         );
 
@@ -328,6 +328,7 @@ public class CaseService {
     }
 
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "caseDetail", key = "#caseId")
     public CaseDetailView findDetail(UUID caseId) {
         CaseDetailProjection projection = entityManager
             .createQuery(
@@ -413,7 +414,14 @@ public class CaseService {
     }
 
     @Transactional
-    public void updateStatus(
+    @org.springframework.cache.annotation.Caching(
+        put = { @org.springframework.cache.annotation.CachePut(value = "caseDetail", key = "#caseId") },
+        evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
+        }
+    )
+    public CaseDetailView updateStatus(
         UUID caseId,
         Integer newStatusId,
         UUID performedById
@@ -475,9 +483,11 @@ public class CaseService {
             performedById,
             now
         );
+        return findDetail(caseId);
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true)
     public UUID createCase(CreateCaseForm form, UUID performedById) {
         CaseClassification classification = classificationRepository
             .findById(form.getClassificationId())
@@ -534,6 +544,13 @@ public class CaseService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(
+        evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "caseDetail", key = "#caseId"),
+            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
+        }
+    )
     public UUID createDisposition(
         UUID caseId,
         CreateDispositionForm form,
@@ -597,6 +614,13 @@ public class CaseService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(
+        evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "caseDetail", key = "#originalCaseId"),
+            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#originalCaseId")
+        }
+    )
     public UUID initiateAppeal(UUID originalCaseId, UUID performedById) {
         Disposition disposition = dispositionRepository
             .findByCaseEntityCaseId(originalCaseId)
@@ -1203,7 +1227,7 @@ public class CaseService {
         Integer statusId,
         Instant filedFrom,
         Instant filedTo
-    ) {
+    ) implements java.io.Serializable {
         static QueryParams from(
             String query,
             Integer classificationId,

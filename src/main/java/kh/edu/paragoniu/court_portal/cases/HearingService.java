@@ -132,6 +132,12 @@ public class HearingService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(
+        evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "publicHearings", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
+        }
+    )
     public UUID scheduleHearing(
         UUID caseId,
         ScheduleHearingForm form,
@@ -199,6 +205,12 @@ public class HearingService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.Caching(
+        evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "publicHearings", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
+        }
+    )
     public UUID rescheduleHearing(
         UUID caseId,
         UUID hearingId,

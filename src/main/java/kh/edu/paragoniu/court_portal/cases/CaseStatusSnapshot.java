@@ -8,4 +8,4 @@ public record CaseStatusSnapshot(
     String title,
     Integer statusId,
     String statusName
-) {}
+) implements java.io.Serializable {}

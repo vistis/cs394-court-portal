@@ -12,4 +12,4 @@ public record CaseRow(
     String badgeClass,
     String filedDate,
     String assignedJudge
-) {}
+) implements java.io.Serializable {}

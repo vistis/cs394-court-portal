@@ -12,4 +12,4 @@ public record CaseRowProjection(
     Instant filedAt,
     String judgeFirstName,
     String judgeLastName
-) {}
+) implements java.io.Serializable {}

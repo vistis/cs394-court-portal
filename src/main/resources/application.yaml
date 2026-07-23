@@ -1,14 +1,23 @@
 server:
   port: ${SERVER_PORT:8080}
+  servlet:
+    session:
+      cookie:
+        name: COURT_PORTAL_SESSION
 
 spring:
   application:
     name: court-portal
 
+  session:
+    redis:
+      namespace: court:portal:session
+
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 22MB
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
 
   datasource:
     url: ${SQL_URL:jdbc:postgresql://localhost:5432/court}
@@ -27,7 +36,7 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/}
       database: ${MONGODB_DATABASE:court}
-      uuid-representation: standard
+      auto-index-creation: true
 
     redis:
       host: ${REDIS_HOST:localhost}
@@ -41,6 +50,10 @@ spring:
       access-key: ${S3_ACCESS_KEY:}
       secret-key: ${S3_SECRET_KEY:}
       endpoint: ${S3_ENDPOINT:}
-      region: ${S3_REGION:us-east-1}
+      region: ${S3_REGION:auto}
       bucket-name: ${S3_BUCKET_NAME:}
       public-url: ${S3_PUBLIC_URL:}
+
+  cache:
+    redis:
+      time-to-live: 300000
