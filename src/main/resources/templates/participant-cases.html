@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|${profile.name} - Court Panel|">Participant Profile</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('participants')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <div class="breadcrumb">
+          <a th:href="@{/participants}">Participants</a>
+          <span>&gt;</span>
+          <span th:text="${profile.name}">Michael Henderson</span>
+        </div>
+
+        <div th:replace="~{fragments/participant-header :: header(${profile})}"></div>
+        <div th:replace="~{fragments/participant-header :: tabs(${profile}, 'cases')}"></div>
+
+        <section class="detail-panel">
+          <h2 class="detail-panel-title">Involved Cases</h2>
+          <p class="detail-summary">
+            This tab is coming soon. Cases this participant is involved in,
+            along with their role and case status, will be shown here in a
+            future update.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

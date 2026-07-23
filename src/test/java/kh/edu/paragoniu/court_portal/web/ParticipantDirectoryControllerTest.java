@@ -16,6 +16,8 @@ import java.util.UUID;
 import kh.edu.paragoniu.court_portal.participants.CreateParticipantForm;
 import kh.edu.paragoniu.court_portal.participants.ParticipantDirectoryRow;
 import kh.edu.paragoniu.court_portal.participants.ParticipantDirectoryService;
+import kh.edu.paragoniu.court_portal.participants.ParticipantNotFoundException;
+import kh.edu.paragoniu.court_portal.participants.ParticipantProfileView;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -143,6 +145,116 @@ class ParticipantDirectoryControllerTest {
 
         assertThat(view).isEqualTo("participant-form");
         verify(participantDirectoryService, never()).createParticipant(any());
+    }
+
+    @Test
+    void profileRendersForValidParticipant() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenReturn(profile(participantId, null));
+
+        mockMvc()
+            .perform(get("/participants/{id}", participantId))
+            .andExpect(status().isOk())
+            .andExpect(view().name("participant-profile"))
+            .andExpect(model().attributeExists("profile"));
+    }
+
+    @Test
+    void profileReturns404ForMalformedUuid() throws Exception {
+        mockMvc()
+            .perform(get("/participants/not-a-uuid"))
+            .andExpect(status().isNotFound())
+            .andExpect(view().name("participant-not-found"));
+    }
+
+    @Test
+    void profileReturns404WhenParticipantNotFound() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenThrow(new ParticipantNotFoundException(participantId));
+
+        mockMvc()
+            .perform(get("/participants/{id}", participantId))
+            .andExpect(status().isNotFound())
+            .andExpect(view().name("participant-not-found"));
+    }
+
+    @Test
+    void profileShowsStoredImageWhenProfilePicturePathIsSet() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenReturn(
+                profile(participantId, "https://cdn.example.com/participants/photo.jpg")
+            );
+
+        ParticipantProfileView captured = (ParticipantProfileView) mockMvc()
+            .perform(get("/participants/{id}", participantId))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getModelAndView()
+            .getModel()
+            .get("profile");
+
+        assertThat(captured.profileImageUrl())
+            .isEqualTo("https://cdn.example.com/participants/photo.jpg");
+    }
+
+    @Test
+    void profileFallsBackToInitialsWhenNoProfilePicture() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenReturn(profile(participantId, null));
+
+        ParticipantProfileView captured = (ParticipantProfileView) mockMvc()
+            .perform(get("/participants/{id}", participantId))
+            .andReturn()
+            .getModelAndView()
+            .getModel()
+            .get("profile");
+
+        assertThat(captured.profileImageUrl()).isNull();
+        assertThat(captured.initials()).isEqualTo("MH");
+    }
+
+    @Test
+    void involvedCasesTabRendersStubPanel() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenReturn(profile(participantId, null));
+
+        mockMvc()
+            .perform(get("/participants/{id}/cases", participantId))
+            .andExpect(status().isOk())
+            .andExpect(view().name("participant-cases"))
+            .andExpect(model().attributeExists("profile"));
+    }
+
+    @Test
+    void documentsTabRendersStubPanel() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenReturn(profile(participantId, null));
+
+        mockMvc()
+            .perform(get("/participants/{id}/documents", participantId))
+            .andExpect(status().isOk())
+            .andExpect(view().name("participant-documents"))
+            .andExpect(model().attributeExists("profile"));
+    }
+
+    private ParticipantProfileView profile(UUID participantId, String profileImageUrl) {
+        return new ParticipantProfileView(
+            participantId,
+            "Michael Henderson",
+            "MH",
+            "Individual",
+            "badge--blue",
+            "Full Legal Name",
+            "m.henderson@email.com",
+            "555-0128",
+            profileImageUrl
+        );
     }
 
     private MockMvc mockMvc() {

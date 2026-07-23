@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -121,6 +122,26 @@ public class ParticipantDirectoryService {
         return List.of(PARTY_INDIVIDUAL, PARTY_GROUP);
     }
 
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = CACHE_NAME, key = "'profile:' + #participantId")
+    public ParticipantProfileView findProfile(UUID participantId) {
+        Participant participant = participantRepository
+            .findById(participantId)
+            .orElseThrow(() -> new ParticipantNotFoundException(participantId));
+
+        return new ParticipantProfileView(
+            participant.getParticipantId(),
+            participant.getName(),
+            initials(participant.getName()),
+            participant.getPartyType(),
+            badgeClass(participant.getPartyType()),
+            nameLabel(participant.getPartyType()),
+            contactField(participant, "email"),
+            contactField(participant, "phone"),
+            resolveProfileImageUrl(participant.getProfilePicturePath())
+        );
+    }
+
     @Transactional
     public UUID createParticipant(CreateParticipantForm form) {
         String partyType = validatePartyType(form.getPartyType());
@@ -202,18 +223,50 @@ public class ParticipantDirectoryService {
             participant.getName(),
             participant.getPartyType(),
             badgeClass(participant.getPartyType()),
-            primaryEmail(participant),
+            contactField(participant, "email"),
             involvedCases
         );
     }
 
-    private String primaryEmail(Participant participant) {
+    private String contactField(Participant participant, String field) {
         var contactInfo = participant.getContactInfo();
-        if (contactInfo == null || !contactInfo.has("email")) {
+        if (contactInfo == null || !contactInfo.has(field)) {
             return "N/A";
         }
-        String email = contactInfo.get("email").stringValue();
-        return email == null || email.isBlank() ? "N/A" : email;
+        String value = contactInfo.get(field).stringValue();
+        return value == null || value.isBlank() ? "N/A" : value;
+    }
+
+    private String initials(String name) {
+        if (name == null || name.isBlank()) {
+            return "?";
+        }
+        String[] parts = name.trim().split("\\s+");
+        String first = parts[0].substring(0, 1);
+        String second = parts.length > 1
+            ? parts[parts.length - 1].substring(0, 1)
+            : "";
+        return (first + second).toUpperCase(Locale.ENGLISH);
+    }
+
+    private String nameLabel(String partyType) {
+        return PARTY_GROUP.equalsIgnoreCase(partyType)
+            ? "Organization / Group Name"
+            : "Full Legal Name";
+    }
+
+    private String resolveProfileImageUrl(String profilePicturePath) {
+        if (
+            profilePicturePath == null ||
+            profilePicturePath.isBlank() ||
+            NO_PICTURE.equalsIgnoreCase(profilePicturePath)
+        ) {
+            return null;
+        }
+        S3Service s3Service = s3ServiceProvider.getIfAvailable();
+        return s3Service == null
+            ? null
+            : s3Service.generatePublicUrl(profilePicturePath);
     }
 
     private String badgeClass(String partyType) {
