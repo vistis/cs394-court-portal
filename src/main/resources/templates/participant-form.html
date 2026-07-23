@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Participant — Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app app--modal-open">
+    <div th:replace="~{fragments/layout :: sidebar('participants')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content modal-page-content">
+        <div class="page-header">
+          <div class="page-heading">
+            <h1 class="page-title">Participants</h1>
+            <p class="page-subtitle">
+              Search and manage all participant profiles across the system.
+            </p>
+          </div>
+        </div>
+
+        <form class="toolbar toolbar--inline" method="get">
+          <div class="field field--search">
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input class="input" type="text" placeholder="Search by name or case ID..." disabled />
+            </div>
+          </div>
+          <button type="button" class="btn-light filter-toggle" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <span>Filter</span>
+          </button>
+        </form>
+
+        <div class="table-card">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Party Type</th>
+                  <th>Contact Info</th>
+                  <th>Involved Cases</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${page.content}">
+                  <td th:text="${row.name}">Participant Name</td>
+                  <td>
+                    <span class="badge" th:classappend="${row.badgeClass}" th:text="${row.partyType}">Individual</span>
+                  </td>
+                  <td th:text="${row.primaryEmail}">name@example.com</td>
+                  <td th:text="${row.involvedCases}">0</td>
+                  <td>View Profile</td>
+                </tr>
+                <tr th:if="${page.empty}">
+                  <td colspan="5" class="table-empty">No participants found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="modal-scrim" aria-hidden="true"></div>
+
+    <section
+      class="status-modal participant-modal"
+      role="dialog"
+      aria-labelledby="participantModalTitle"
+      aria-modal="true"
+    >
+      <div class="status-modal-head">
+        <div>
+          <h1 id="participantModalTitle" class="status-modal-title">
+            Add Participant
+          </h1>
+          <p class="status-modal-subtitle">Register a new participant profile</p>
+        </div>
+        <a
+          class="modal-close"
+          th:href="@{/participants}"
+          aria-label="Close"
+          >&times;</a
+        >
+      </div>
+
+      <form
+        class="status-modal-form participant-modal-form"
+        method="post"
+        th:action="@{/participants}"
+        th:object="${createParticipantForm}"
+        enctype="multipart/form-data"
+      >
+        <div
+          class="alert alert--error"
+          th:if="${#fields.hasGlobalErrors()}"
+          th:each="err : ${#fields.globalErrors()}"
+          th:text="${err}"
+        >
+          Unable to add participant.
+        </div>
+
+        <div class="field">
+          <label class="field-label">Party Type</label>
+          <div class="segment-control">
+            <a
+              th:class="${createParticipantForm.partyType == 'Individual'} ? 'segment segment--active' : 'segment'"
+              th:href="@{/participants/add(partyType='Individual')}"
+              >Individual</a
+            >
+            <a
+              th:class="${createParticipantForm.partyType == 'Group'} ? 'segment segment--active' : 'segment'"
+              th:href="@{/participants/add(partyType='Group')}"
+              >Group</a
+            >
+          </div>
+          <input type="hidden" th:field="*{partyType}" />
+          <div class="field-error" th:if="${#fields.hasErrors('partyType')}" th:errors="*{partyType}">
+            Party type error
+          </div>
+        </div>
+
+        <div class="field">
+          <label
+            class="field-label"
+            for="participantName"
+            th:text="${createParticipantForm.partyType == 'Individual'} ? 'Full Legal Name' : 'Organization / Group Name'"
+            >Full Legal Name</label
+          >
+          <input
+            class="input"
+            id="participantName"
+            type="text"
+            th:field="*{name}"
+            placeholder="e.g. Michael Henderson"
+          />
+          <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">
+            Name error
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="participantEmail">Email Address</label>
+          <input
+            class="input"
+            id="participantEmail"
+            type="email"
+            th:field="*{email}"
+            placeholder="e.g. m.henderson@email.com"
+          />
+          <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
+            Email error
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="participantPhone">Phone Number</label>
+          <input
+            class="input"
+            id="participantPhone"
+            type="tel"
+            th:field="*{phone}"
+            placeholder="e.g. +855 12 345 678"
+          />
+          <div class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">
+            Phone error
+          </div>
+          <p class="field-hint">Additional contact fields can be added later.</p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="participantProfileImage">Profile Picture</label>
+          <input
+            class="input"
+            id="participantProfileImage"
+            type="file"
+            name="profileImage"
+            accept="image/jpeg,image/png"
+          />
+          <p class="field-hint">Optional. JPEG or PNG.</p>
+          <div
+            class="field-error"
+            th:if="${#fields.hasErrors('profileImage')}"
+            th:errors="*{profileImage}"
+          >
+            Profile image error
+          </div>
+        </div>
+
+        <div class="status-modal-actions">
+          <a th:href="@{/participants}" class="btn-light">Cancel</a>
+          <button
+            class="btn-primary"
+            type="submit"
+            sec:authorize="hasAuthority('CASE_CREATE')"
+          >
+            Add
+          </button>
+        </div>
+      </form>
+    </section>
+  </body>
+</html>

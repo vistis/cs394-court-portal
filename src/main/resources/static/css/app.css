@@ -1525,6 +1525,58 @@ body {
   font-size: 13px;
 }
 
+.toolbar--inline {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.toolbar--inline .field--search {
+  flex: 1 1 auto;
+}
+
+.filter-dropdown {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.filter-toggle {
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.filter-dropdown-menu {
+  position: absolute;
+  z-index: 70;
+  top: calc(100% + 4px);
+  right: 0;
+  display: none;
+  width: 220px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.14);
+}
+
+.filter-dropdown--open .filter-dropdown-menu {
+  display: block;
+}
+
+.filter-dropdown-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.btn-secondary--sm {
+  height: 32px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+
 .hearing-toolbar {
   display: flex;
   align-items: center;

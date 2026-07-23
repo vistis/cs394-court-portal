@@ -146,6 +146,26 @@
   });
 })();
 
+// Toolbar Filter Dropdown (e.g. Participants Directory)
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll("[data-filter-dropdown]").forEach(dropdown => {
+      const toggle = dropdown.querySelector("[data-filter-toggle]");
+      if (!toggle) return;
+
+      toggle.addEventListener("click", () => {
+        dropdown.classList.toggle("filter-dropdown--open");
+      });
+
+      document.addEventListener("click", event => {
+        if (!dropdown.contains(event.target)) {
+          dropdown.classList.remove("filter-dropdown--open");
+        }
+      });
+    });
+  });
+})();
+
 // Case Document Form
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
