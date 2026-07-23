@@ -3,6 +3,9 @@ package kh.edu.paragoniu.court_portal.participants;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,6 +13,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import kh.edu.paragoniu.court_portal.cases.DocumentService;
+import kh.edu.paragoniu.court_portal.cases.DocumentTypeOption;
+import kh.edu.paragoniu.court_shared.entity.CaseParticipant;
+import kh.edu.paragoniu.court_shared.entity.Documents;
 import kh.edu.paragoniu.court_shared.entity.Participant;
 import kh.edu.paragoniu.court_shared.repository.ParticipantRepository;
 import kh.edu.paragoniu.court_shared.service.S3Service;
@@ -20,6 +29,10 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -43,25 +56,35 @@ public class ParticipantDirectoryService {
     private static final String NO_PICTURE = "N/A";
     private static final String PARTY_INDIVIDUAL = "Individual";
     private static final String PARTY_GROUP = "Group";
+    private static final ZoneId DISPLAY_ZONE = ZoneId.of("Asia/Phnom_Penh");
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter
+        .ofPattern("MMM dd, yyyy", Locale.ENGLISH)
+        .withZone(DISPLAY_ZONE);
 
     private final ParticipantRepository participantRepository;
     private final EntityManager entityManager;
     private final CacheManager cacheManager;
     private final ObjectMapper objectMapper;
     private final ObjectProvider<S3Service> s3ServiceProvider;
+    private final MongoTemplate mongoTemplate;
+    private final DocumentService documentService;
 
     public ParticipantDirectoryService(
         ParticipantRepository participantRepository,
         EntityManager entityManager,
         CacheManager cacheManager,
         ObjectMapper objectMapper,
-        ObjectProvider<S3Service> s3ServiceProvider
+        ObjectProvider<S3Service> s3ServiceProvider,
+        MongoTemplate mongoTemplate,
+        DocumentService documentService
     ) {
         this.participantRepository = participantRepository;
         this.entityManager = entityManager;
         this.cacheManager = cacheManager;
         this.objectMapper = objectMapper;
         this.s3ServiceProvider = s3ServiceProvider;
+        this.mongoTemplate = mongoTemplate;
+        this.documentService = documentService;
     }
 
     @Transactional(readOnly = true)
@@ -140,6 +163,152 @@ public class ParticipantDirectoryService {
             contactField(participant, "phone"),
             resolveProfileImageUrl(participant.getProfilePicturePath())
         );
+    }
+
+    /**
+     * Reverse lookup of every case this participant is attached to, via
+     * case_participants. Read-only report view - no write path here; the
+     * participant/case association itself is created and removed by
+     * {@code cases/ParticipantService.addParticipant}/{@code removeParticipant},
+     * which also evict this cache entry after their own commits.
+     */
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = CACHE_NAME, key = "'involved-cases:' + #participantId")
+    public List<ParticipantInvolvedCaseRow> findInvolvedCases(UUID participantId) {
+        return entityManager
+            .createQuery(
+                "SELECT cp FROM CaseParticipant cp " +
+                "WHERE cp.participantEntity.participantId = :participantId " +
+                "ORDER BY cp.caseEntity.filedAt DESC",
+                CaseParticipant.class
+            )
+            .setParameter("participantId", participantId)
+            .getResultList()
+            .stream()
+            .map(this::toInvolvedCaseRow)
+            .toList();
+    }
+
+    public List<DocumentTypeOption> findDocumentTypeOptions() {
+        return documentService.findDocumentTypes();
+    }
+
+    /**
+     * Documents for cases this participant is involved in - NOT a lookup by
+     * Mongo's submitted_by_id. That field is always the uploading portal user
+     * (see DocumentService.createDocument), never a participant, so it can't
+     * identify "this participant's documents." Involvement is via case_id,
+     * same case set as findInvolvedCases.
+     *
+     * <p>Cache is evicted (with the rest of this cache region) whenever
+     * cases/DocumentService.createDocument or updateMotionStatus commits,
+     * since either can affect what shows up here.
+     */
+    @Transactional(readOnly = true)
+    @Cacheable(
+        cacheNames = CACHE_NAME,
+        key = "'documents:' + #participantId + '|' + #query + '|' + #documentType + '|' + #pageable.pageNumber + '|' + #pageable.pageSize"
+    )
+    public Page<ParticipantDocumentRow> findDocuments(
+        UUID participantId,
+        String query,
+        String documentType,
+        Pageable pageable
+    ) {
+        Map<UUID, String> caseNumbersByCaseId = findParticipantCaseNumbers(participantId);
+        if (caseNumbersByCaseId.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Criteria> filters = new ArrayList<>();
+        filters.add(Criteria.where("caseId").in(caseNumbersByCaseId.keySet()));
+        if (documentType != null && !documentType.isBlank()) {
+            filters.add(Criteria.where("documentType").is(documentType));
+        }
+        if (query != null && !query.isBlank()) {
+            String normalizedQuery = query.trim().toLowerCase(Locale.ENGLISH);
+            List<UUID> caseIdsMatchingNumber = caseNumbersByCaseId
+                .entrySet()
+                .stream()
+                .filter(entry ->
+                    entry.getValue().toLowerCase(Locale.ENGLISH).contains(normalizedQuery)
+                )
+                .map(Map.Entry::getKey)
+                .toList();
+            filters.add(
+                new Criteria()
+                    .orOperator(
+                        Criteria.where("title").regex(Pattern.quote(query.trim()), "i"),
+                        Criteria.where("caseId").in(caseIdsMatchingNumber)
+                    )
+            );
+        }
+
+        Query mongoQuery = new Query(new Criteria().andOperator(filters));
+        long total = mongoTemplate.count(mongoQuery, Documents.class);
+        mongoQuery
+            .with(pageable)
+            .with(Sort.by(Sort.Direction.DESC, "uploaded_at"));
+
+        List<ParticipantDocumentRow> rows = mongoTemplate
+            .find(mongoQuery, Documents.class)
+            .stream()
+            .map(document -> toDocumentRow(document, caseNumbersByCaseId))
+            .toList();
+
+        return new PageImpl<>(rows, pageable, total);
+    }
+
+    private Map<UUID, String> findParticipantCaseNumbers(UUID participantId) {
+        return entityManager
+            .createQuery(
+                "SELECT cp.caseEntity.caseId, cp.caseEntity.caseNumber FROM CaseParticipant cp " +
+                "WHERE cp.participantEntity.participantId = :participantId",
+                Object[].class
+            )
+            .setParameter("participantId", participantId)
+            .getResultStream()
+            .collect(
+                Collectors.toMap(
+                    row -> (UUID) row[0],
+                    row -> (String) row[1],
+                    (a, b) -> a,
+                    LinkedHashMap::new
+                )
+            );
+    }
+
+    private ParticipantDocumentRow toDocumentRow(
+        Documents document,
+        Map<UUID, String> caseNumbersByCaseId
+    ) {
+        return new ParticipantDocumentRow(
+            document.getId(),
+            document.getTitle(),
+            document.getDocumentType(),
+            documentBadgeClass(document.getDocumentType()),
+            document.getCaseId(),
+            caseNumbersByCaseId.getOrDefault(document.getCaseId(), "Unknown"),
+            formatDocumentDate(document.getUploadedAt()),
+            document.isConfidential()
+        );
+    }
+
+    private String formatDocumentDate(Instant instant) {
+        return instant == null ? "" : DATE_FMT.format(instant);
+    }
+
+    /** Mirrors cases/DocumentService's document-type badge mapping. */
+    private String documentBadgeClass(String documentType) {
+        return switch (documentType) {
+            case "Filing" -> "badge--blue";
+            case "Motion" -> "badge--indigo";
+            case "Continuance" -> "badge--amber";
+            case "Evidence" -> "badge--orange";
+            case "Disposition" -> "badge--green";
+            case "Appeal" -> "badge--purple";
+            default -> "badge--slate";
+        };
     }
 
     @Transactional
@@ -226,6 +395,49 @@ public class ParticipantDirectoryService {
             contactField(participant, "email"),
             involvedCases
         );
+    }
+
+    private ParticipantInvolvedCaseRow toInvolvedCaseRow(CaseParticipant caseParticipant) {
+        var caseEntity = caseParticipant.getCaseEntity();
+        String status = caseEntity.getStatus().getName();
+        return new ParticipantInvolvedCaseRow(
+            caseEntity.getCaseId(),
+            caseEntity.getCaseNumber(),
+            caseEntity.getTitle(),
+            caseEntity.getClassification().getName(),
+            prettify(status),
+            caseBadgeClass(status),
+            caseParticipant.getParticipantRole().getRoleName()
+        );
+    }
+
+    /** Mirrors CaseService's status set/badge mapping (V1__case_module.sql seed values). */
+    private String caseBadgeClass(String status) {
+        return switch (status) {
+            case "FILING_OPEN" -> "badge--green";
+            case "SCHEDULED" -> "badge--blue";
+            case "IN_TRIAL" -> "badge--indigo";
+            case "ADJOURNED" -> "badge--amber";
+            case "UNDER_APPEAL" -> "badge--purple";
+            case "DISPOSED" -> "badge--gray";
+            case "DRAFT" -> "badge--slate";
+            default -> "badge--gray";
+        };
+    }
+
+    private String prettify(String code) {
+        if (code == null || code.isBlank()) {
+            return "Unknown";
+        }
+        String[] parts = code.toLowerCase(Locale.ENGLISH).split("_");
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            if (part.isEmpty()) continue;
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(Character.toUpperCase(part.charAt(0)));
+            sb.append(part.substring(1));
+        }
+        return sb.toString();
     }
 
     private String contactField(Participant participant, String field) {

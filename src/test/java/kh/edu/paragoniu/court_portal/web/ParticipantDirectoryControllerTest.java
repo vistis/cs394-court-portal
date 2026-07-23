@@ -13,9 +13,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import java.util.UUID;
+import kh.edu.paragoniu.court_portal.cases.DocumentTypeOption;
 import kh.edu.paragoniu.court_portal.participants.CreateParticipantForm;
 import kh.edu.paragoniu.court_portal.participants.ParticipantDirectoryRow;
 import kh.edu.paragoniu.court_portal.participants.ParticipantDirectoryService;
+import kh.edu.paragoniu.court_portal.participants.ParticipantDocumentRow;
+import kh.edu.paragoniu.court_portal.participants.ParticipantInvolvedCaseRow;
 import kh.edu.paragoniu.court_portal.participants.ParticipantNotFoundException;
 import kh.edu.paragoniu.court_portal.participants.ParticipantProfileView;
 import org.junit.jupiter.api.Test;
@@ -218,29 +221,214 @@ class ParticipantDirectoryControllerTest {
     }
 
     @Test
-    void involvedCasesTabRendersStubPanel() throws Exception {
+    void involvedCasesTabRendersRowsWithPerCaseRole() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        UUID caseIdOne = UUID.randomUUID();
+        UUID caseIdTwo = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenReturn(profile(participantId, null));
+        when(participantDirectoryService.findInvolvedCases(participantId))
+            .thenReturn(
+                List.of(
+                    new ParticipantInvolvedCaseRow(
+                        caseIdOne,
+                        "CR-2026-0881",
+                        "State vs. Henderson",
+                        "Criminal Felony",
+                        "Open",
+                        "badge--green",
+                        "Defendant"
+                    ),
+                    new ParticipantInvolvedCaseRow(
+                        caseIdTwo,
+                        "CV-2024-0015",
+                        "TechFlow Inc. vs. Henderson",
+                        "Commercial Dispute",
+                        "Pending",
+                        "badge--amber",
+                        "Respondent"
+                    )
+                )
+            );
+
+        List<ParticipantInvolvedCaseRow> captured;
+        var result = mockMvc()
+            .perform(get("/participants/{id}/cases", participantId))
+            .andExpect(status().isOk())
+            .andExpect(view().name("participant-cases"))
+            .andExpect(model().attributeExists("profile", "involvedCases"))
+            .andReturn();
+        @SuppressWarnings("unchecked")
+        List<ParticipantInvolvedCaseRow> rows = (List<ParticipantInvolvedCaseRow>) result
+            .getModelAndView()
+            .getModel()
+            .get("involvedCases");
+        captured = rows;
+
+        assertThat(captured).hasSize(2);
+        assertThat(captured.get(0).role()).isEqualTo("Defendant");
+        assertThat(captured.get(1).role()).isEqualTo("Respondent");
+        assertThat(captured.get(0).caseId()).isEqualTo(caseIdOne);
+        assertThat(captured.get(1).caseId()).isEqualTo(caseIdTwo);
+    }
+
+    @Test
+    void involvedCasesTabRendersEmptyStateWhenParticipantHasNoCases() throws Exception {
         UUID participantId = UUID.randomUUID();
         when(participantDirectoryService.findProfile(participantId))
             .thenReturn(profile(participantId, null));
+        when(participantDirectoryService.findInvolvedCases(participantId))
+            .thenReturn(List.of());
 
         mockMvc()
             .perform(get("/participants/{id}/cases", participantId))
             .andExpect(status().isOk())
             .andExpect(view().name("participant-cases"))
-            .andExpect(model().attributeExists("profile"));
+            .andExpect(model().attributeExists("involvedCases"));
     }
 
     @Test
-    void documentsTabRendersStubPanel() throws Exception {
+    void documentsTabRendersRowsAcrossDifferentCases() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        UUID caseIdOne = UUID.randomUUID();
+        UUID caseIdTwo = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenReturn(profile(participantId, null));
+        when(participantDirectoryService.findDocumentTypeOptions())
+            .thenReturn(List.of(new DocumentTypeOption("Filing", "Filing")));
+        when(
+            participantDirectoryService.findDocuments(
+                eq(participantId),
+                eq(null),
+                eq(null),
+                any()
+            )
+        )
+            .thenReturn(
+                new PageImpl<>(
+                    List.of(
+                        new ParticipantDocumentRow(
+                            "doc-1",
+                            "Affidavit of Residency",
+                            "Filing",
+                            "badge--blue",
+                            caseIdOne,
+                            "CR-2026-0881",
+                            "Jan 15, 2026",
+                            false
+                        ),
+                        new ParticipantDocumentRow(
+                            "doc-2",
+                            "Financial Disclosure",
+                            "Evidence",
+                            "badge--orange",
+                            caseIdTwo,
+                            "CV-2024-0015",
+                            "Aug 05, 2024",
+                            true
+                        )
+                    )
+                )
+            );
+
+        var result = mockMvc()
+            .perform(get("/participants/{id}/documents", participantId))
+            .andExpect(status().isOk())
+            .andExpect(view().name("participant-documents"))
+            .andExpect(model().attributeExists("profile", "documentPage", "documentTypes"))
+            .andReturn();
+
+        @SuppressWarnings("unchecked")
+        PageImpl<ParticipantDocumentRow> documentPage = (PageImpl<ParticipantDocumentRow>) result
+            .getModelAndView()
+            .getModel()
+            .get("documentPage");
+
+        assertThat(documentPage.getContent()).hasSize(2);
+        assertThat(documentPage.getContent().get(0).caseId()).isEqualTo(caseIdOne);
+        assertThat(documentPage.getContent().get(1).caseId()).isEqualTo(caseIdTwo);
+        assertThat(documentPage.getContent().get(0).confidential()).isFalse();
+        assertThat(documentPage.getContent().get(1).confidential()).isTrue();
+    }
+
+    @Test
+    void documentsTabForwardsSearchQuery() throws Exception {
         UUID participantId = UUID.randomUUID();
         when(participantDirectoryService.findProfile(participantId))
             .thenReturn(profile(participantId, null));
+        when(participantDirectoryService.findDocumentTypeOptions())
+            .thenReturn(List.of());
+        when(
+            participantDirectoryService.findDocuments(
+                eq(participantId),
+                eq("affidavit"),
+                eq(null),
+                any()
+            )
+        )
+            .thenReturn(new PageImpl<>(List.of()));
+
+        mockMvc()
+            .perform(
+                get("/participants/{id}/documents", participantId)
+                    .param("query", "affidavit")
+            )
+            .andExpect(status().isOk());
+
+        verify(participantDirectoryService)
+            .findDocuments(eq(participantId), eq("affidavit"), eq(null), any());
+    }
+
+    @Test
+    void documentsTabForwardsDocumentTypeFilter() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenReturn(profile(participantId, null));
+        when(participantDirectoryService.findDocumentTypeOptions())
+            .thenReturn(List.of());
+        when(
+            participantDirectoryService.findDocuments(
+                eq(participantId),
+                eq(null),
+                eq("Evidence"),
+                any()
+            )
+        )
+            .thenReturn(new PageImpl<>(List.of()));
+
+        mockMvc()
+            .perform(
+                get("/participants/{id}/documents", participantId)
+                    .param("documentType", "Evidence")
+            )
+            .andExpect(status().isOk());
+
+        verify(participantDirectoryService)
+            .findDocuments(eq(participantId), eq(null), eq("Evidence"), any());
+    }
+
+    @Test
+    void documentsTabRendersEmptyStateWhenParticipantHasNoDocuments() throws Exception {
+        UUID participantId = UUID.randomUUID();
+        when(participantDirectoryService.findProfile(participantId))
+            .thenReturn(profile(participantId, null));
+        when(participantDirectoryService.findDocumentTypeOptions())
+            .thenReturn(List.of());
+        when(
+            participantDirectoryService.findDocuments(
+                eq(participantId),
+                eq(null),
+                eq(null),
+                any()
+            )
+        )
+            .thenReturn(new PageImpl<>(List.of()));
 
         mockMvc()
             .perform(get("/participants/{id}/documents", participantId))
             .andExpect(status().isOk())
             .andExpect(view().name("participant-documents"))
-            .andExpect(model().attributeExists("profile"));
+            .andExpect(model().attributeExists("documentPage"));
     }
 
     private ParticipantProfileView profile(UUID participantId, String profileImageUrl) {

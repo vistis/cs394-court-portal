@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityManager;
+import kh.edu.paragoniu.court_portal.cases.DocumentService;
 import kh.edu.paragoniu.court_shared.entity.Participant;
 import kh.edu.paragoniu.court_shared.repository.ParticipantRepository;
 import kh.edu.paragoniu.court_shared.service.S3Service;
@@ -15,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.Cache;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -37,6 +39,12 @@ class ParticipantDirectoryServiceTest {
     @Mock
     private ObjectProvider<S3Service> s3ServiceProvider;
 
+    @Mock
+    private MongoTemplate mongoTemplate;
+
+    @Mock
+    private DocumentService documentService;
+
     @Test
     void createParticipantEvictsDirectoryCacheOnlyAfterCommit() {
         ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager(
@@ -50,7 +58,9 @@ class ParticipantDirectoryServiceTest {
             entityManager,
             cacheManager,
             JsonMapper.builder().build(),
-            s3ServiceProvider
+            s3ServiceProvider,
+            mongoTemplate,
+            documentService
         );
 
         when(participantRepository.save(any(Participant.class)))

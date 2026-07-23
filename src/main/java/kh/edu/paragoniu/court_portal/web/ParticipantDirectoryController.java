@@ -28,6 +28,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class ParticipantDirectoryController {
 
     private static final int PAGE_SIZE = 20;
+    private static final int DOCUMENT_PAGE_SIZE = 10;
 
     private final ParticipantDirectoryService participantDirectoryService;
 
@@ -100,16 +101,57 @@ public class ParticipantDirectoryController {
         Model model,
         HttpServletResponse response
     ) {
-        return renderProfileTab(participantId, "participant-cases", model, response);
+        try {
+            UUID id = UUID.fromString(participantId);
+            model.addAttribute("profile", participantDirectoryService.findProfile(id));
+            model.addAttribute(
+                "involvedCases",
+                participantDirectoryService.findInvolvedCases(id)
+            );
+            model.addAttribute("activeNav", "participants");
+            return "participant-cases";
+        } catch (IllegalArgumentException | ParticipantNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "participants");
+            return "participant-not-found";
+        }
     }
 
     @GetMapping("/participants/{participantId}/documents")
     public String documents(
         @PathVariable String participantId,
+        @RequestParam(required = false) String query,
+        @RequestParam(required = false) String documentType,
+        @RequestParam(defaultValue = "0") int page,
         Model model,
         HttpServletResponse response
     ) {
-        return renderProfileTab(participantId, "participant-documents", model, response);
+        try {
+            UUID id = UUID.fromString(participantId);
+            Pageable pageable = PageRequest.of(Math.max(page, 0), DOCUMENT_PAGE_SIZE);
+            model.addAttribute("profile", participantDirectoryService.findProfile(id));
+            model.addAttribute(
+                "documentPage",
+                participantDirectoryService.findDocuments(
+                    id,
+                    query,
+                    documentType,
+                    pageable
+                )
+            );
+            model.addAttribute(
+                "documentTypes",
+                participantDirectoryService.findDocumentTypeOptions()
+            );
+            model.addAttribute("query", query);
+            model.addAttribute("selectedDocumentType", documentType);
+            model.addAttribute("activeNav", "participants");
+            return "participant-documents";
+        } catch (IllegalArgumentException | ParticipantNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "participants");
+            return "participant-not-found";
+        }
     }
 
     private String renderProfileTab(
