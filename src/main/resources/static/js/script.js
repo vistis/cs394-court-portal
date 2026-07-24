@@ -13,6 +13,45 @@
   });
 })();
 
+// Add Participant Modal - Party Type Toggle
+(function () {
+  var NAME_FIELD_COPY = {
+    Individual: { label: "Full Legal Name *", placeholder: "Enter name..." },
+    Group: { label: "Organization / Group Name *", placeholder: "Enter organization name..." }
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var toggle = document.querySelector('[data-party-type-toggle]');
+    if (!toggle) return;
+
+    var hiddenInput = toggle.querySelector('[data-party-type-input]');
+    var nameLabel = document.querySelector('[data-party-type-name-label]');
+    var nameInput = document.querySelector('[data-party-type-name-input]');
+    var options = Array.prototype.slice.call(
+      toggle.querySelectorAll('[data-party-type-option]')
+    );
+
+    function applyPartyType(partyType) {
+      var copy = NAME_FIELD_COPY[partyType] || NAME_FIELD_COPY.Individual;
+      options.forEach(function (option) {
+        var active = option.getAttribute('data-party-type-option') === partyType;
+        option.classList.toggle('segment--active', active);
+      });
+      if (hiddenInput) hiddenInput.value = partyType;
+      if (nameLabel) nameLabel.textContent = copy.label;
+      if (nameInput) nameInput.setAttribute('placeholder', copy.placeholder);
+    }
+
+    options.forEach(function (option) {
+      option.addEventListener('click', function () {
+        applyPartyType(option.getAttribute('data-party-type-option'));
+      });
+    });
+
+    applyPartyType(hiddenInput ? hiddenInput.value : 'Individual');
+  });
+})();
+
 // Hearing Schedule Form Case Lookup
 (function () {
   document.addEventListener('DOMContentLoaded', function () {

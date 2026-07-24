@@ -125,6 +125,26 @@ class ParticipantDirectoryControllerTest {
     }
 
     @Test
+    void createGroupParticipantRedirectsToDirectoryOnSuccess() {
+        CreateParticipantForm form = new CreateParticipantForm();
+        form.setPartyType("Group");
+        form.setName("TechFlow Inc.");
+        form.setEmail("legal@techflow.io");
+        form.setPhone("555-0111");
+
+        String view = new ParticipantDirectoryController(participantDirectoryService)
+            .createParticipant(
+                form,
+                new BeanPropertyBindingResult(form, "createParticipantForm"),
+                new ConcurrentModel(),
+                new RedirectAttributesModelMap()
+            );
+
+        assertThat(view).isEqualTo("redirect:/participants");
+        verify(participantDirectoryService).createParticipant(form);
+    }
+
+    @Test
     void createParticipantWithBindingErrorsReRendersFormWithoutCallingService() {
         CreateParticipantForm form = new CreateParticipantForm();
         form.setPartyType("Individual");

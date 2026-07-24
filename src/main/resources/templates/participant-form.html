@@ -110,21 +110,21 @@
           Unable to add participant.
         </div>
 
-        <div class="field">
-          <label class="field-label">Party Type</label>
+        <div class="field" data-party-type-toggle>
+          <label class="field-label">Party Type *</label>
           <div class="segment-control">
-            <a
+            <button
+              type="button"
+              data-party-type-option="Individual"
               th:class="${createParticipantForm.partyType == 'Individual'} ? 'segment segment--active' : 'segment'"
-              th:href="@{/participants/add(partyType='Individual')}"
-              >Individual</a
-            >
-            <a
+            >Individual</button>
+            <button
+              type="button"
+              data-party-type-option="Group"
               th:class="${createParticipantForm.partyType == 'Group'} ? 'segment segment--active' : 'segment'"
-              th:href="@{/participants/add(partyType='Group')}"
-              >Group</a
-            >
+            >Group</button>
           </div>
-          <input type="hidden" th:field="*{partyType}" />
+          <input type="hidden" th:field="*{partyType}" data-party-type-input />
           <div class="field-error" th:if="${#fields.hasErrors('partyType')}" th:errors="*{partyType}">
             Party type error
           </div>
@@ -134,54 +134,60 @@
           <label
             class="field-label"
             for="participantName"
-            th:text="${createParticipantForm.partyType == 'Individual'} ? 'Full Legal Name' : 'Organization / Group Name'"
-            >Full Legal Name</label
+            data-party-type-name-label
+            th:text="${createParticipantForm.partyType == 'Individual'} ? 'Full Legal Name *' : 'Organization / Group Name *'"
+            >Full Legal Name *</label
           >
           <input
             class="input"
             id="participantName"
             type="text"
             th:field="*{name}"
-            placeholder="e.g. Michael Henderson"
+            data-party-type-name-input
+            th:placeholder="${createParticipantForm.partyType == 'Individual'} ? 'Enter name...' : 'Enter organization name...'"
           />
           <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">
             Name error
           </div>
         </div>
 
-        <div class="field">
-          <label class="field-label" for="participantEmail">Email Address</label>
-          <input
-            class="input"
-            id="participantEmail"
-            type="email"
-            th:field="*{email}"
-            placeholder="e.g. m.henderson@email.com"
-          />
-          <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
-            Email error
-          </div>
-        </div>
+        <div class="field-group">
+          <h2 class="field-group-title">Contact Details</h2>
 
-        <div class="field">
-          <label class="field-label" for="participantPhone">Phone Number</label>
-          <input
-            class="input"
-            id="participantPhone"
-            type="tel"
-            th:field="*{phone}"
-            placeholder="e.g. +855 12 345 678"
-          />
-          <div class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">
-            Phone error
+          <div class="field">
+            <label class="field-label" for="participantEmail">Email Address *</label>
+            <input
+              class="input"
+              id="participantEmail"
+              type="email"
+              th:field="*{email}"
+              placeholder="e.g. m.henderson@email.com"
+            />
+            <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">
+              Email error
+            </div>
           </div>
-          <p class="field-hint">Additional contact fields can be added later.</p>
+
+          <div class="field">
+            <label class="field-label" for="participantPhone">Phone Number *</label>
+            <input
+              class="input"
+              id="participantPhone"
+              type="tel"
+              th:field="*{phone}"
+              placeholder="e.g. +855 12 345 678"
+            />
+            <div class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">
+              Phone error
+            </div>
+            <p class="field-hint">Additional contact fields can be added later.</p>
+          </div>
         </div>
 
         <div class="field">
           <label class="field-label" for="participantProfileImage">Profile Picture</label>
           <input
-            class="input"
+            class="input file-input"
             id="participantProfileImage"
             type="file"
             name="profileImage"
@@ -204,10 +210,11 @@
             type="submit"
             sec:authorize="hasAuthority('CASE_CREATE')"
           >
-            Add
+            Save Participant
           </button>
         </div>
       </form>
     </section>
+    <script src="/js/script.js"></script>
   </body>
 </html>

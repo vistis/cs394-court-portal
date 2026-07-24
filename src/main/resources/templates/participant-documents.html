@@ -64,7 +64,7 @@
                   <th>Type</th>
                   <th>Case Number</th>
                   <th>Date Filed</th>
-                  <th>Actions</th>
+                  <th class="table-actions-header">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,7 +90,7 @@
                     >
                   </td>
                   <td th:text="${document.uploadedDate}">Jan 15, 2026</td>
-                  <td class="table-actions">
+                  <td class="table-actions table-actions--center">
                     <a
                       th:href="@{/cases/{caseId}/documents/{documentId}(caseId=${document.caseId}, documentId=${document.documentId})}"
                       title="View"

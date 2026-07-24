@@ -739,6 +739,19 @@ body {
   white-space: nowrap;
 }
 
+.table-actions--center {
+  justify-content: center;
+}
+
+.data-table th.table-actions-header {
+  text-align: center;
+}
+
+.data-table th.text-center,
+.data-table td.text-center {
+  text-align: center;
+}
+
 .table-actions a {
   color: var(--accent);
   font-weight: 700;
@@ -1493,6 +1506,10 @@ body {
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .segment + .segment {
@@ -1502,6 +1519,23 @@ body {
 .segment--active {
   background: var(--text-strong);
   color: #fff;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.field-group-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-strong);
 }
 
 .participant-option-search .input {

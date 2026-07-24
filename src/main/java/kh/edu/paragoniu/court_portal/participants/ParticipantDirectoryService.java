@@ -318,9 +318,16 @@ public class ParticipantDirectoryService {
         if (name == null) {
             throw new ParticipantDirectoryException("name", "Name is required.");
         }
+        String email = trim(form.getEmail());
+        if (emailAlreadyExists(email)) {
+            throw new ParticipantDirectoryException(
+                "email",
+                "A participant with this email already exists."
+            );
+        }
 
         ObjectNode contactInfo = objectMapper.createObjectNode();
-        contactInfo.put("email", trim(form.getEmail()));
+        contactInfo.put("email", email);
         contactInfo.put("phone", trim(form.getPhone()));
 
         Participant participant = new Participant();
@@ -332,6 +339,32 @@ public class ParticipantDirectoryService {
         Participant saved = participantRepository.save(participant);
         scheduleCacheEvictionAfterCommit();
         return saved.getParticipantId();
+    }
+
+    /**
+     * contact_info is jsonb, so this can't be a JPQL property path or a
+     * DB-level unique constraint without a shared-module migration; a native
+     * query against the ->> operator is the narrowest way to check it from
+     * the portal alone. Case-insensitive, since "Riri@x.com" and "riri@x.com"
+     * are the same participant in practice.
+     *
+     * <p>This is a check-then-insert, not a transactional guarantee - two
+     * concurrent submissions of the same email could both pass this check
+     * before either commits. Acceptable for a low-frequency admin form; a
+     * real guarantee would need a unique index on
+     * lower(contact_info->>'email'), which is out of scope here.
+     */
+    private boolean emailAlreadyExists(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        Number count = (Number) entityManager
+            .createNativeQuery(
+                "SELECT COUNT(*) FROM participants WHERE LOWER(contact_info->>'email') = LOWER(:email)"
+            )
+            .setParameter("email", email)
+            .getSingleResult();
+        return count.longValue() > 0;
     }
 
     /**

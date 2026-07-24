@@ -93,8 +93,8 @@
                   <th>Name</th>
                   <th>Party Type</th>
                   <th>Contact Info</th>
-                  <th>Involved Cases</th>
-                  <th>Actions</th>
+                  <th class="text-center">Involved Cases</th>
+                  <th class="table-actions-header">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -109,13 +109,15 @@
                     >
                   </td>
                   <td th:text="${row.primaryEmail}">name@example.com</td>
-                  <td th:text="${row.involvedCases}">0</td>
-                  <td>
+                  <td class="text-center" th:text="${row.involvedCases}">0</td>
+                  <td class="table-actions table-actions--center">
                     <a
-                      class="cell-link"
                       th:href="@{/participants/{id}(id=${row.participantId})}"
-                      >View Profile</a
-                    >
+                      title="View Profile"
+                      aria-label="View profile"
+                      >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </a>
                   </td>
                 </tr>
                 <tr th:if="${page.empty}">
