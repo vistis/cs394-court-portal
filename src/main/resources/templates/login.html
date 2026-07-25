@@ -134,21 +134,6 @@
       </main>
     </div>
 
-    <script>
-      (function () {
-        var toggle = document.getElementById('pwToggle');
-        var pw = document.getElementById('password');
-        if (toggle && pw) {
-          toggle.addEventListener('click', function () {
-            var show = pw.type === 'password';
-            pw.type = show ? 'text' : 'password';
-            toggle.setAttribute(
-              'aria-label',
-              show ? 'Hide password' : 'Show password'
-            );
-          });
-        }
-      })();
-    </script>
+    <script src="/js/script.js"></script>
   </body>
 </html>

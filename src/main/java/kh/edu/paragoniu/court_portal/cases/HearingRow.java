@@ -10,4 +10,4 @@ public record HearingRow(
     String judgeName,
     String status,
     String badgeClass
-) {}
+) implements java.io.Serializable {}

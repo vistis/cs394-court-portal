@@ -7,4 +7,4 @@ public record AssignedGreffierProjection(
     String lastName,
     String roleName,
     Instant assignedAt
-) {}
+) implements java.io.Serializable {}

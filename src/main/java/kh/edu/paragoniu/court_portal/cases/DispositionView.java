@@ -8,4 +8,4 @@ public record DispositionView(
     String dispositionDate,
     String rulingSummary,
     String presidingJudge
-) {}
+) implements java.io.Serializable {}

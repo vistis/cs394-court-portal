@@ -3,7 +3,6 @@ package kh.edu.paragoniu.court_portal.config;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -26,9 +25,15 @@ import org.springframework.data.redis.serializer.RedisSerializer;
  * <p>Cache names are shared with the other panels' equivalent reads so the
  * data-handling stays consistent across court-portal / court-public /
  * court-admin. This config should eventually be promoted to court-shared.
+ *
+ * <p>{@code @EnableCaching} lives on {@code CourtPortalApplication}; this class
+ * only supplies the {@link RedisCacheManager}, which replaces Spring Boot's
+ * auto-configured one and therefore also governs the public-panel caches
+ * ({@code publicCases}, {@code publicCaseDetail}, {@code publicHearings},
+ * {@code caseDetail}). Null values stay allowed to match the default manager
+ * those caches were written against.
  */
 @Configuration
-@EnableCaching
 public class CacheConfig {
 
     // Volatile per-entity data — short TTL.
@@ -41,7 +46,6 @@ public class CacheConfig {
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration base = RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(LIST_TTL)
-            .disableCachingNullValues()
             .serializeValuesWith(
                 SerializationPair.fromSerializer(
                     // Pass the application classloader so JDK deserialization
@@ -56,8 +60,12 @@ public class CacheConfig {
         caches.put("assignedCases", base.entryTtl(LIST_TTL));
         caches.put("hearingList", base.entryTtl(LIST_TTL));
         caches.put("caseList", base.entryTtl(LIST_TTL));
+        caches.put("publicCases", base.entryTtl(LIST_TTL));
+        caches.put("publicHearings", base.entryTtl(LIST_TTL));
         // Details (single records)
         caches.put("hearingDetail", base.entryTtl(DETAIL_TTL));
+        caches.put("caseDetail", base.entryTtl(DETAIL_TTL));
+        caches.put("publicCaseDetail", base.entryTtl(DETAIL_TTL));
         // Reference / lookup data
         caches.put("greffierNames", base.entryTtl(REF_TTL));
         caches.put("refData", base.entryTtl(REF_TTL));

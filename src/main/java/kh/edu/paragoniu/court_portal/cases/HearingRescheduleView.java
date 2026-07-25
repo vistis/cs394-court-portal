@@ -7,4 +7,4 @@ public record HearingRescheduleView(
     String hearingType,
     String currentSchedule,
     Integer courtroomId
-) {}
+) implements java.io.Serializable {}

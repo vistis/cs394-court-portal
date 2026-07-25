@@ -4,4 +4,4 @@ public record AssignedJudgeProjection(
     String firstName,
     String lastName,
     String licenseNumber
-) {}
+) implements java.io.Serializable {}

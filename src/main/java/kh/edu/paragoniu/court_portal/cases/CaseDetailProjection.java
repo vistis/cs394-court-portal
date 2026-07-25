@@ -14,4 +14,4 @@ public record CaseDetailProjection(
     Instant lastUpdatedAt,
     Instant closedAt,
     boolean publicCase
-) {}
+) implements java.io.Serializable {}

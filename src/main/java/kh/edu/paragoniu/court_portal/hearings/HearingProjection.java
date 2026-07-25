@@ -13,4 +13,4 @@ public record HearingProjection(
     Instant startAt,
     Instant endAt,
     String status
-) {}
+) implements java.io.Serializable {}

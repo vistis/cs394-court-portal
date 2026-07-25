@@ -8,4 +8,4 @@ public record DocumentRow(
     String title,
     String uploadedDate,
     boolean confidential
-) {}
+) implements java.io.Serializable {}

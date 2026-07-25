@@ -18,4 +18,4 @@ public record DocumentDetailView(
     String filePath,
     Map<String, Object> metadata,
     List<Map<String, Object>> chainOfCustody
-) {}
+) implements java.io.Serializable {}

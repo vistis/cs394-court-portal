@@ -8,4 +8,4 @@ public record AuthUser(
     String password,
     String displayName,
     boolean active
-) {}
+) implements java.io.Serializable {}

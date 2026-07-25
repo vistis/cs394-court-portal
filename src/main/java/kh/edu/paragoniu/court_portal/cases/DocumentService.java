@@ -25,6 +25,8 @@ import kh.edu.paragoniu.court_shared.repository.JudgeRepository;
 import kh.edu.paragoniu.court_shared.repository.UserRepository;
 import kh.edu.paragoniu.court_shared.service.S3Service;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +38,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class DocumentService {
+
+    /** Shared with participants/ParticipantDirectoryService's Documents tab cache. */
+    private static final String PARTICIPANTS_DIRECTORY_CACHE = "participantsDirectory";
 
     private static final ZoneId DISPLAY_ZONE = ZoneId.of("Asia/Phnom_Penh");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter
@@ -75,6 +80,7 @@ public class DocumentService {
     private final EntityManager entityManager;
     private final MongoTemplate mongoTemplate;
     private final ObjectProvider<S3Service> s3ServiceProvider;
+    private final CacheManager cacheManager;
 
     public DocumentService(
         CaseRepository caseRepository,
@@ -84,7 +90,8 @@ public class DocumentService {
         UserRepository userRepository,
         EntityManager entityManager,
         MongoTemplate mongoTemplate,
-        ObjectProvider<S3Service> s3ServiceProvider
+        ObjectProvider<S3Service> s3ServiceProvider,
+        CacheManager cacheManager
     ) {
         this.caseRepository = caseRepository;
         this.judgeRepository = judgeRepository;
@@ -94,6 +101,25 @@ public class DocumentService {
         this.entityManager = entityManager;
         this.mongoTemplate = mongoTemplate;
         this.s3ServiceProvider = s3ServiceProvider;
+        this.cacheManager = cacheManager;
+    }
+
+    /**
+     * Evicts participants/ParticipantDirectoryService's Documents tab cache,
+     * since a new/edited document can change what a participant's Documents
+     * tab shows. Unlike the JPA writes elsewhere in this codebase, this isn't
+     * wrapped in @Transactional - createDocument/updateMotionStatus write
+     * directly to Mongo via MongoTemplate.save, which is not deferred the way
+     * Hibernate's flush-at-commit is, so there's no pre-commit staleness
+     * window to guard against here; a synchronous clear right after the save
+     * returns is safe (see ParticipantDirectoryService for the JPA case,
+     * where the afterCommit callback is actually needed).
+     */
+    private void evictParticipantsDirectoryCache() {
+        Cache cache = cacheManager.getCache(PARTICIPANTS_DIRECTORY_CACHE);
+        if (cache != null) {
+            cache.clear();
+        }
     }
 
     public Page<DocumentRow> findDocuments(
@@ -263,6 +289,7 @@ public class DocumentService {
         document.setUploadedAt(Instant.now());
         document.setMetadata(metadata);
         mongoTemplate.save(document);
+        evictParticipantsDirectoryCache();
         createAutomaticDocketEntry(
             caseId,
             documentType.toUpperCase(Locale.ENGLISH),
@@ -360,6 +387,7 @@ public class DocumentService {
 
         document.setMetadata(metadata);
         mongoTemplate.save(document);
+        evictParticipantsDirectoryCache();
         if (!oldStatus.equals(newStatus)) {
             createAutomaticDocketEntry(
                 caseId,

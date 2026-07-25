@@ -5,7 +5,7 @@ public record DispositionTabView(
     boolean appealExists,
     String appellateCaseNumber,
     String appellateCaseId
-) {
+) implements java.io.Serializable {
     public boolean hasDisposition() {
         return disposition != null;
     }

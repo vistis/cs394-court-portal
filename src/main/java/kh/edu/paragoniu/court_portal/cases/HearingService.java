@@ -136,7 +136,9 @@ public class HearingService {
     @Transactional
     @Caching(evict = {
         @CacheEvict(value = "hearingList", allEntries = true),
-        @CacheEvict(value = "hearingDetail", allEntries = true)
+        @CacheEvict(value = "hearingDetail", allEntries = true),
+        @CacheEvict(value = "publicHearings", allEntries = true),
+        @CacheEvict(value = "publicCaseDetail", key = "#caseId")
     })
     public UUID scheduleHearing(
         UUID caseId,
@@ -207,7 +209,9 @@ public class HearingService {
     @Transactional
     @Caching(evict = {
         @CacheEvict(value = "hearingList", allEntries = true),
-        @CacheEvict(value = "hearingDetail", allEntries = true)
+        @CacheEvict(value = "hearingDetail", allEntries = true),
+        @CacheEvict(value = "publicHearings", allEntries = true),
+        @CacheEvict(value = "publicCaseDetail", key = "#caseId")
     })
     public UUID rescheduleHearing(
         UUID caseId,

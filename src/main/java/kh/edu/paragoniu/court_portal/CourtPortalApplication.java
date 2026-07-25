@@ -4,8 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.cache.annotation.EnableCaching;
 
 @SpringBootApplication
+@EnableCaching
 @EntityScan(basePackages = { "kh.edu.paragoniu.court_shared.entity" })
 @EnableJpaRepositories(
 	basePackages = { "kh.edu.paragoniu.court_shared.repository" }
