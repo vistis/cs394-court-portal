@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|${profile.name} - Court Panel|">Participant Profile</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('participants')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <div class="breadcrumb">
+          <a th:href="@{/participants}">Participants</a>
+          <span>&gt;</span>
+          <span th:text="${profile.name}">Michael Henderson</span>
+        </div>
+
+        <div th:replace="~{fragments/participant-header :: header(${profile})}"></div>
+        <div th:replace="~{fragments/participant-header :: tabs(${profile}, 'profile')}"></div>
+
+        <section class="detail-panel">
+          <h2 class="detail-panel-title">Participant Details</h2>
+          <dl class="detail-facts">
+            <div>
+              <dt th:text="${profile.nameLabel}">Full Legal Name</dt>
+              <dd th:text="${profile.name}">Michael Henderson</dd>
+            </div>
+            <div>
+              <dt>Party Type</dt>
+              <dd th:text="${profile.partyType}">Individual</dd>
+            </div>
+            <div>
+              <dt>Primary Email</dt>
+              <dd>
+                <a
+                  th:if="${profile.primaryEmail != 'N/A'}"
+                  th:href="|mailto:${profile.primaryEmail}|"
+                  th:text="${profile.primaryEmail}"
+                  >m.henderson@email.com</a
+                >
+                <span th:if="${profile.primaryEmail == 'N/A'}">N/A</span>
+              </dd>
+            </div>
+            <div>
+              <dt>Primary Phone</dt>
+              <dd th:text="${profile.primaryPhone}">555-0128</dd>
+            </div>
+          </dl>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

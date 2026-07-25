@@ -13,9 +13,13 @@ import kh.edu.paragoniu.court_shared.repository.CaseParticipantRepository;
 import kh.edu.paragoniu.court_shared.repository.CaseRepository;
 import kh.edu.paragoniu.court_shared.repository.ParticipantRepository;
 import kh.edu.paragoniu.court_shared.repository.ParticipantRoleRepository;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.databind.JsonNode;
 
 @Service
@@ -24,21 +28,27 @@ public class ParticipantService {
     private static final String PARTY_INDIVIDUAL = "Individual";
     private static final String PARTY_GROUP = "Group";
 
+    /** Shared with participants/ParticipantDirectoryService's Involved Cases cache. */
+    private static final String PARTICIPANTS_DIRECTORY_CACHE = "participantsDirectory";
+
     private final CaseRepository caseRepository;
     private final CaseParticipantRepository caseParticipantRepository;
     private final ParticipantRepository participantRepository;
     private final ParticipantRoleRepository participantRoleRepository;
+    private final CacheManager cacheManager;
 
     public ParticipantService(
         CaseRepository caseRepository,
         CaseParticipantRepository caseParticipantRepository,
         ParticipantRepository participantRepository,
-        ParticipantRoleRepository participantRoleRepository
+        ParticipantRoleRepository participantRoleRepository,
+        CacheManager cacheManager
     ) {
         this.caseRepository = caseRepository;
         this.caseParticipantRepository = caseParticipantRepository;
         this.participantRepository = participantRepository;
         this.participantRoleRepository = participantRoleRepository;
+        this.cacheManager = cacheManager;
     }
 
     @Transactional(readOnly = true)
@@ -162,6 +172,7 @@ public class ParticipantService {
         caseParticipant.setParticipantEntity(participant);
         caseParticipant.setParticipantRole(role);
         caseParticipantRepository.save(caseParticipant);
+        scheduleParticipantsDirectoryCacheEvictionAfterCommit();
     }
 
     @Transactional
@@ -176,6 +187,31 @@ public class ParticipantService {
             );
         }
         caseParticipantRepository.deleteById(id);
+        scheduleParticipantsDirectoryCacheEvictionAfterCommit();
+    }
+
+    /**
+     * Evicts participants/ParticipantDirectoryService's cache (both the
+     * directory's involved-cases count and the profile's Involved Cases tab)
+     * after this transaction commits, since case_participants rows changed
+     * here are what that cache's data is built from. Registered manually
+     * rather than via @CacheEvict for the same reason documented on
+     * ParticipantDirectoryService.scheduleCacheEvictionAfterCommit: stacking
+     * @CacheEvict with @Transactional on one method has no ordering guarantee
+     * and can evict before commit.
+     */
+    private void scheduleParticipantsDirectoryCacheEvictionAfterCommit() {
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    Cache cache = cacheManager.getCache(PARTICIPANTS_DIRECTORY_CACHE);
+                    if (cache != null) {
+                        cache.clear();
+                    }
+                }
+            }
+        );
     }
 
     private CaseParticipantRow toRow(CaseParticipant caseParticipant) {

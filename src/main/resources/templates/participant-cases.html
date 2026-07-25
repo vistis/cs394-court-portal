@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|${profile.name} - Court Panel|">Participant Profile</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('participants')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <div class="breadcrumb">
+          <a th:href="@{/participants}">Participants</a>
+          <span>&gt;</span>
+          <span th:text="${profile.name}">Michael Henderson</span>
+        </div>
+
+        <div th:replace="~{fragments/participant-header :: header(${profile})}"></div>
+        <div th:replace="~{fragments/participant-header :: tabs(${profile}, 'cases')}"></div>
+
+        <section class="table-card">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Case Number</th>
+                  <th>Title</th>
+                  <th>Classification</th>
+                  <th>Status</th>
+                  <th>Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${involvedCases}">
+                  <td>
+                    <a
+                      class="cell-link"
+                      th:href="@{/cases/{caseId}(caseId=${row.caseId})}"
+                      th:text="${row.caseNumber}"
+                      >CR-2026-0881</a
+                    >
+                  </td>
+                  <td th:text="${row.title}">State vs. Henderson</td>
+                  <td th:text="${row.classification}">Criminal Felony</td>
+                  <td>
+                    <span
+                      class="badge"
+                      th:classappend="${row.badgeClass}"
+                      th:text="${row.status}"
+                      >Open</span
+                    >
+                  </td>
+                  <td th:text="${row.role}">Defendant</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(involvedCases)}">
+                  <td colspan="5" class="table-empty">No cases involved.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
