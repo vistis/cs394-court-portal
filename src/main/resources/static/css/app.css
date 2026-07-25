@@ -2326,3 +2326,224 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
+
+/* ===================== Greffier Management ===================== */
+/* In-card search toolbar */
+.table-toolbar {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  margin: 0;
+}
+
+.table-search {
+  max-width: 320px;
+}
+
+/* Leave room for the search icon so it doesn't overlap the placeholder */
+.table-search .input {
+  padding-left: 40px;
+}
+
+/* Name cell: avatar + name */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.person-name {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+/* Assigned-cases count pill */
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+/* Small table action buttons */
+.btn-table {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text-strong);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-table:hover {
+  background: var(--surface);
+}
+
+.btn-table + .btn-table {
+  margin-left: 8px;
+}
+
+.col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Numbered pagination */
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text-strong);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.page-num:hover {
+  background: var(--surface);
+}
+
+.page-num--active {
+  background: var(--nav-dark);
+  border-color: var(--nav-dark);
+  color: #fff;
+}
+
+.page-num--active:hover {
+  background: var(--nav-dark);
+}
+
+.page-chevron {
+  color: var(--text);
+}
+
+.page-num--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Bold case-number cell on the assigned-cases table */
+.cell-strong {
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/* Back button in a card footer sits left; pagination (if any) sits right */
+.btn-back {
+  padding: 8px 20px;
+}
+
+/* ---- Assign Case modal ---- */
+.modal-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.assign-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.assign-hint {
+  margin: 0;
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.assign-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.assign-item:hover {
+  background: var(--surface);
+}
+
+.assign-item--selected,
+.assign-item--selected:hover {
+  background: #eef2fb;
+  border-color: var(--accent);
+}
+
+.assign-item--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.assign-item--disabled:hover {
+  background: none;
+}
+
+.assign-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.assign-item-number {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.assign-item-title {
+  font-size: 13px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assign-item-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--border-soft);
+  color: var(--text-muted);
+  white-space: nowrap;
+}

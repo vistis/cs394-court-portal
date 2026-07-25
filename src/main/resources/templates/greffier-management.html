@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Greffier Management — Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('greffier')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content">
+        <!-- Page header -->
+        <div class="page-header">
+          <div class="page-heading">
+            <h1 class="page-title">Greffier</h1>
+            <p class="page-subtitle">
+              Manage court personnel, assignments, and structural hierarchy.
+            </p>
+          </div>
+        </div>
+
+        <!-- Results card -->
+        <div class="table-card">
+          <!-- Search -->
+          <form class="table-toolbar" method="get" th:action="@{/greffiers}">
+            <div class="input-wrap table-search">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input
+                class="input"
+                type="text"
+                name="query"
+                th:value="${query}"
+                placeholder="Search by name..."
+              />
+            </div>
+          </form>
+
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Contact Info</th>
+                  <th>Assigned Cases</th>
+                  <th class="col-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${page.content}">
+                  <td>
+                    <div class="person">
+                      <div class="avatar" th:text="${row.initials}">JT</div>
+                      <span class="person-name" th:text="${row.fullName}"
+                        >Sarah Jenkins</span
+                      >
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge badge--gray" th:text="${row.role}"
+                      >Greffier</span
+                    >
+                  </td>
+                  <td class="muted" th:text="${row.email}">
+                    s.jenkins@court.gov
+                  </td>
+                  <td>
+                    <span class="count-pill" th:text="${row.assignedCases}"
+                      >12</span
+                    >
+                  </td>
+                  <td class="col-actions">
+                    <button
+                      type="button"
+                      class="btn-table"
+                      data-assign-open
+                      th:attr="data-greffier-id=${row.userId},data-greffier-name=${row.fullName}"
+                    >
+                      Assign Case
+                    </button>
+                    <a
+                      class="btn-table"
+                      th:href="@{/greffiers/{id}(id=${row.userId})}"
+                      >View Detail</a
+                    >
+                  </td>
+                </tr>
+                <tr th:if="${page.empty}">
+                  <td colspan="5" class="table-empty">No greffiers found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" th:if="${page.totalPages > 1}">
+            <span
+              class="pagination-info"
+              th:text="|Showing ${page.numberOfElements == 0 ? 0 : page.number * page.size + 1}-${page.number * page.size + page.numberOfElements} of ${page.totalElements} greffiers|"
+              >Showing 1-8 of 4 greffiers</span
+            >
+            <div class="pagination-pages">
+              <a
+                class="page-num page-chevron"
+                th:classappend="${page.first} ? 'page-num--disabled' : ''"
+                th:href="${page.first} ? '#' : @{/greffiers(query=${query},page=${page.number - 1})}"
+                aria-label="Previous page"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </a>
+              <a
+                th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                class="page-num"
+                th:classappend="${i == page.number} ? 'page-num--active' : ''"
+                th:href="@{/greffiers(query=${query},page=${i})}"
+                th:text="${i + 1}"
+                >1</a
+              >
+              <a
+                class="page-num page-chevron"
+                th:classappend="${page.last} ? 'page-num--disabled' : ''"
+                th:href="${page.last} ? '#' : @{/greffiers(query=${query},page=${page.number + 1})}"
+                aria-label="Next page"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Assign Case modal -->
+    <div class="modal-overlay" id="assignModal">
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="assignTitle"
+      >
+        <div class="modal-head">
+          <div>
+            <h2 class="modal-title" id="assignTitle">Assign Case</h2>
+            <p class="modal-subtitle">
+              Greffier: <span data-assign-greffier-name>—</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            class="modal-close"
+            data-assign-close
+            aria-label="Close"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form
+          class="modal-body"
+          method="post"
+          data-assign-form
+          th:action="@{/greffiers/{id}/assign(id='PLACEHOLDERID')}"
+        >
+          <input type="hidden" name="caseId" data-assign-caseid />
+
+          <div class="form-field">
+            <label class="form-label" for="assignSearch">Search Case</label>
+            <div class="input-wrap table-search">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input
+                class="input"
+                type="text"
+                id="assignSearch"
+                data-assign-search
+                autocomplete="off"
+                placeholder="Search by case number or title..."
+              />
+            </div>
+          </div>
+
+          <div class="assign-results" data-assign-results>
+            <p class="assign-hint">Start typing to find a case…</p>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-outline" data-assign-close>
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" data-assign-submit disabled>
+              Assign
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script th:inline="none">
+      (function () {
+        const overlay = document.getElementById("assignModal");
+        if (!overlay) return;
+        const form = overlay.querySelector("[data-assign-form]");
+        const actionTemplate = form.getAttribute("action");
+        const nameEl = overlay.querySelector("[data-assign-greffier-name]");
+        const caseIdInput = overlay.querySelector("[data-assign-caseid]");
+        const searchInput = overlay.querySelector("[data-assign-search]");
+        const resultsBox = overlay.querySelector("[data-assign-results]");
+        const submitBtn = overlay.querySelector("[data-assign-submit]");
+        let greffierId = null;
+        let timer = null;
+
+        function open(id, name) {
+          greffierId = id;
+          form.setAttribute("action", actionTemplate.replace("PLACEHOLDERID", id));
+          nameEl.textContent = name || "—";
+          caseIdInput.value = "";
+          searchInput.value = "";
+          submitBtn.disabled = true;
+          resultsBox.innerHTML =
+            '<p class="assign-hint">Start typing to find a case…</p>';
+          overlay.classList.add("is-open");
+          setTimeout(function () {
+            searchInput.focus();
+          }, 30);
+          load("");
+        }
+        function close() {
+          overlay.classList.remove("is-open");
+        }
+
+        function select(item, opt) {
+          resultsBox
+            .querySelectorAll(".assign-item--selected")
+            .forEach(function (el) {
+              el.classList.remove("assign-item--selected");
+            });
+          item.classList.add("assign-item--selected");
+          caseIdInput.value = opt.caseId;
+          submitBtn.disabled = false;
+        }
+
+        function render(list) {
+          resultsBox.innerHTML = "";
+          if (!list || list.length === 0) {
+            resultsBox.innerHTML =
+              '<p class="assign-hint">No cases found.</p>';
+            return;
+          }
+          list.forEach(function (opt) {
+            const item = document.createElement("div");
+            item.className =
+              "assign-item" + (opt.alreadyAssigned ? " assign-item--disabled" : "");
+
+            const main = document.createElement("div");
+            main.className = "assign-item-main";
+            const num = document.createElement("span");
+            num.className = "assign-item-number";
+            num.textContent = opt.caseNumber;
+            const title = document.createElement("span");
+            title.className = "assign-item-title";
+            title.textContent = opt.title;
+            main.appendChild(num);
+            main.appendChild(title);
+
+            const right = document.createElement("div");
+            if (opt.alreadyAssigned) {
+              const tag = document.createElement("span");
+              tag.className = "assign-item-tag";
+              tag.textContent = "Assigned";
+              right.appendChild(tag);
+            } else {
+              const badge = document.createElement("span");
+              badge.className = "badge " + opt.badgeClass;
+              badge.textContent = opt.status;
+              right.appendChild(badge);
+            }
+
+            item.appendChild(main);
+            item.appendChild(right);
+
+            if (!opt.alreadyAssigned) {
+              item.addEventListener("click", function () {
+                select(item, opt);
+              });
+            }
+            resultsBox.appendChild(item);
+          });
+        }
+
+        function load(q) {
+          if (!greffierId) return;
+          fetch(
+            "/greffiers/" +
+              encodeURIComponent(greffierId) +
+              "/case-search?q=" +
+              encodeURIComponent(q)
+          )
+            .then(function (r) {
+              return r.json();
+            })
+            .then(render)
+            .catch(function () {
+              resultsBox.innerHTML =
+                '<p class="assign-hint">Could not load cases.</p>';
+            });
+        }
+
+        document.querySelectorAll("[data-assign-open]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            open(
+              btn.getAttribute("data-greffier-id"),
+              btn.getAttribute("data-greffier-name")
+            );
+          });
+        });
+        overlay.querySelectorAll("[data-assign-close]").forEach(function (b) {
+          b.addEventListener("click", close);
+        });
+        overlay.addEventListener("mousedown", function (e) {
+          if (e.target === overlay) close();
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") close();
+        });
+        searchInput.addEventListener("input", function () {
+          const q = searchInput.value;
+          caseIdInput.value = "";
+          submitBtn.disabled = true;
+          clearTimeout(timer);
+          timer = setTimeout(function () {
+            load(q);
+          }, 200);
+        });
+      })();
+    </script>
+  </body>
+</html>

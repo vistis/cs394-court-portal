@@ -19,6 +19,7 @@ import kh.edu.paragoniu.court_shared.entity.HearingType;
 import kh.edu.paragoniu.court_shared.repository.HearingRepository;
 import kh.edu.paragoniu.court_shared.repository.HearingTypeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +45,7 @@ public class HearingScheduleService {
     private final HearingTypeRepository hearingTypeRepository;
     private final HearingRepository hearingRepository;
 
+    @Cacheable("hearingList")
     @Transactional(readOnly = true)
     public Page<HearingScheduleRow> search(
         String query,
@@ -122,6 +124,7 @@ public class HearingScheduleService {
         return new PageImpl<>(rows, pageable, total);
     }
 
+    @Cacheable("hearingDetail")
     @Transactional(readOnly = true)
     public HearingDetailView findDetail(UUID hearingId) {
         Hearing hearing = hearingRepository
@@ -147,6 +150,7 @@ public class HearingScheduleService {
         return hearingTypeRepository.findAll();
     }
 
+    @Cacheable(value = "refData", key = "'hearingStatuses'")
     public List<String> statusOptions() {
         return entityManager
             .createQuery(

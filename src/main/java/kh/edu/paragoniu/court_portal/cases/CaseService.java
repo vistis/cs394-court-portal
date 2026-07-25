@@ -33,6 +33,8 @@ import kh.edu.paragoniu.court_shared.repository.CaseRepository;
 import kh.edu.paragoniu.court_shared.repository.AppealRepository;
 import kh.edu.paragoniu.court_shared.repository.DispositionOutcomeRepository;
 import kh.edu.paragoniu.court_shared.repository.DispositionRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -91,6 +93,7 @@ public class CaseService {
         this.mongoTemplate = mongoTemplate;
     }
 
+    @Cacheable("caseList")
     @Transactional(readOnly = true)
     public Page<CaseRow> search(
         String query,
@@ -164,6 +167,7 @@ public class CaseService {
         return new PageImpl<>(rows, pageable, total);
     }
 
+    @Cacheable(value = "refData", key = "'caseClassifications'")
     @Transactional(readOnly = true)
     public List<FilterOption> findClassificationOptions() {
         return entityManager
@@ -181,6 +185,7 @@ public class CaseService {
             .getResultList();
     }
 
+    @Cacheable(value = "refData", key = "'caseStatuses'")
     @Transactional(readOnly = true)
     public List<FilterOption> findStatusOptions() {
         return entityManager
@@ -198,6 +203,7 @@ public class CaseService {
             .getResultList();
     }
 
+    @Cacheable(value = "refData", key = "'dispositionOutcomes'")
     @Transactional(readOnly = true)
     public List<FilterOption> findDispositionOutcomeOptions() {
         return dispositionOutcomeRepository
@@ -413,6 +419,7 @@ public class CaseService {
     }
 
     @Transactional
+    @CacheEvict(value = "caseList", allEntries = true)
     public void updateStatus(
         UUID caseId,
         Integer newStatusId,
@@ -478,6 +485,7 @@ public class CaseService {
     }
 
     @Transactional
+    @CacheEvict(value = "caseList", allEntries = true)
     public UUID createCase(CreateCaseForm form, UUID performedById) {
         CaseClassification classification = classificationRepository
             .findById(form.getClassificationId())
@@ -534,6 +542,7 @@ public class CaseService {
     }
 
     @Transactional
+    @CacheEvict(value = "caseList", allEntries = true)
     public UUID createDisposition(
         UUID caseId,
         CreateDispositionForm form,
@@ -597,6 +606,7 @@ public class CaseService {
     }
 
     @Transactional
+    @CacheEvict(value = "caseList", allEntries = true)
     public UUID initiateAppeal(UUID originalCaseId, UUID performedById) {
         Disposition disposition = dispositionRepository
             .findByCaseEntityCaseId(originalCaseId)
