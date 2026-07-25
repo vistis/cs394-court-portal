@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register New Lawyer — Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('lawyers')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--form content--narrow">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a th:href="@{/lawyers-judges}">Lawyers &amp; Judge</a>
+          <span>&gt;</span>
+          <a th:href="@{/lawyers-judges(tab='lawyer')}">Lawyers</a>
+          <span>&gt;</span>
+          <span>Add New Lawyer</span>
+        </nav>
+
+        <div class="page-header">
+          <div class="page-heading">
+            <h1 class="page-title">Register New Lawyer</h1>
+            <p class="page-subtitle">
+              Enter the professional details to register a new attorney or
+              prosecutor in the system.
+            </p>
+          </div>
+        </div>
+
+        <form
+          class="form-card"
+          method="post"
+          th:action="@{/lawyers-judges/add-lawyer}"
+          th:object="${createLawyerForm}"
+          enctype="multipart/form-data"
+        >
+          <h2 class="form-card-title">Professional Details</h2>
+
+          <div
+            class="alert alert--error"
+            th:if="${#fields.hasGlobalErrors()}"
+            th:each="err : ${#fields.globalErrors()}"
+            th:text="${err}"
+          >
+            Unable to register lawyer.
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="form-label" for="firstName">First Name *</label>
+              <input
+                class="form-input"
+                id="firstName"
+                type="text"
+                th:field="*{firstName}"
+                placeholder="e.g., Elena"
+              />
+              <p
+                class="form-error"
+                th:if="${#fields.hasErrors('firstName')}"
+                th:errors="*{firstName}"
+              ></p>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="lastName">Last Name *</label>
+              <input
+                class="form-input"
+                id="lastName"
+                type="text"
+                th:field="*{lastName}"
+                placeholder="e.g., Rodriguez"
+              />
+              <p
+                class="form-error"
+                th:if="${#fields.hasErrors('lastName')}"
+                th:errors="*{lastName}"
+              ></p>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label class="form-label" for="barNumber">Bar Number *</label>
+              <input
+                class="form-input"
+                id="barNumber"
+                type="text"
+                th:field="*{barNumber}"
+                placeholder="E.G., NY-784920"
+              />
+              <p
+                class="form-error"
+                th:if="${#fields.hasErrors('barNumber')}"
+                th:errors="*{barNumber}"
+              ></p>
+            </div>
+
+            <div class="form-field">
+              <div class="form-label-row">
+                <label class="form-label" for="firmName">Firm Name / Office</label>
+                <span class="form-optional">Optional</span>
+              </div>
+              <input
+                class="form-input"
+                id="firmName"
+                type="text"
+                th:field="*{firmName}"
+                placeholder="e.g., Rodriguez &amp; Partners Law"
+              />
+              <p
+                class="form-error"
+                th:if="${#fields.hasErrors('firmName')}"
+                th:errors="*{firmName}"
+              ></p>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Upload Profile Picture</label>
+            <label class="file-drop" for="profileImage" data-file-drop>
+              <input
+                class="file-drop-input"
+                id="profileImage"
+                type="file"
+                name="profileImage"
+                accept="image/jpeg,image/png"
+                data-file-input
+              />
+              <svg class="file-drop-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/></svg>
+              <span class="file-drop-text">
+                Drag and drop your file here, or
+                <span class="file-drop-link">click to browse</span>
+              </span>
+              <span class="file-drop-hint">JPG or PNG — MAX 20MB</span>
+              <span class="file-drop-name" data-file-name></span>
+            </label>
+            <p
+              class="form-error"
+              th:if="${#fields.hasErrors('profileImage')}"
+              th:errors="*{profileImage}"
+            ></p>
+          </div>
+
+          <div class="form-actions form-actions--end">
+            <a th:href="@{/lawyers-judges(tab='lawyer')}" class="btn-outline">Cancel</a>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <script th:inline="none">
+      (function () {
+        const zone = document.querySelector("[data-file-drop]");
+        if (!zone) return;
+        const input = zone.querySelector("[data-file-input]");
+        const nameEl = zone.querySelector("[data-file-name]");
+
+        input.addEventListener("change", function () {
+          nameEl.textContent = input.files.length
+            ? input.files[0].name
+            : "";
+        });
+        ["dragenter", "dragover"].forEach(function (evt) {
+          zone.addEventListener(evt, function (e) {
+            e.preventDefault();
+            zone.classList.add("file-drop--over");
+          });
+        });
+        ["dragleave", "drop"].forEach(function (evt) {
+          zone.addEventListener(evt, function (e) {
+            e.preventDefault();
+            zone.classList.remove("file-drop--over");
+          });
+        });
+        zone.addEventListener("drop", function (e) {
+          if (e.dataTransfer && e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            nameEl.textContent = input.files[0].name;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
