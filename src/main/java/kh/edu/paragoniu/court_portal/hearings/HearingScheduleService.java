@@ -3,6 +3,7 @@ package kh.edu.paragoniu.court_portal.hearings;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -10,9 +11,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
+import kh.edu.paragoniu.court_portal.cases.CaseDetailNotFoundException;
+import kh.edu.paragoniu.court_shared.entity.Case;
+import kh.edu.paragoniu.court_shared.entity.Hearing;
 import kh.edu.paragoniu.court_shared.entity.HearingType;
+import kh.edu.paragoniu.court_shared.repository.HearingRepository;
 import kh.edu.paragoniu.court_shared.repository.HearingTypeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -28,13 +35,17 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class HearingScheduleService {
 
+    private static final ZoneId DISPLAY_ZONE = ZoneId.of("Asia/Phnom_Penh");
+
     private static final DateTimeFormatter DT_FMT = DateTimeFormatter
         .ofPattern("dd MMM yyyy, hh:mm a", Locale.ENGLISH)
-        .withZone(ZoneOffset.UTC);
+        .withZone(DISPLAY_ZONE);
 
     private final EntityManager entityManager;
     private final HearingTypeRepository hearingTypeRepository;
+    private final HearingRepository hearingRepository;
 
+    @Cacheable("hearingList")
     @Transactional(readOnly = true)
     public Page<HearingScheduleRow> search(
         String query,
@@ -93,7 +104,7 @@ public class HearingScheduleService {
 
         TypedQuery<HearingProjection> dataQuery = entityManager.createQuery(
             "SELECT new kh.edu.paragoniu.court_portal.hearings.HearingProjection(" +
-            "h.caseEntity.caseId, h.caseEntity.caseNumber, h.hearingType.name, " +
+            "h.hearingId, h.caseEntity.caseId, h.caseEntity.caseNumber, h.hearingType.name, " +
             "h.courtroom.roomNumber, h.startAt, h.endAt, h.status) " +
             "FROM Hearing h" +
             whereClause +
@@ -113,10 +124,33 @@ public class HearingScheduleService {
         return new PageImpl<>(rows, pageable, total);
     }
 
+    @Cacheable("hearingDetail")
+    @Transactional(readOnly = true)
+    public HearingDetailView findDetail(UUID hearingId) {
+        Hearing hearing = hearingRepository
+            .findById(hearingId)
+            .orElseThrow(() -> new CaseDetailNotFoundException(hearingId));
+        Case caseEntity = hearing.getCaseEntity();
+        return new HearingDetailView(
+            hearing.getHearingId().toString(),
+            caseEntity.getCaseId().toString(),
+            caseEntity.getCaseNumber(),
+            caseEntity.getTitle(),
+            hearing.getHearingType().getName(),
+            hearing.getCourtroom().getRoomNumber(),
+            hearing.getCourtroom().getCourtroomId(),
+            prettyStatus(hearing.getStatus()),
+            badgeClass(hearing.getStatus()),
+            DT_FMT.format(hearing.getStartAt()),
+            DT_FMT.format(hearing.getEndAt())
+        );
+    }
+
     public List<HearingType> hearingTypeOptions() {
         return hearingTypeRepository.findAll();
     }
 
+    @Cacheable(value = "refData", key = "'hearingStatuses'")
     public List<String> statusOptions() {
         return entityManager
             .createQuery(
@@ -128,6 +162,7 @@ public class HearingScheduleService {
 
     private HearingScheduleRow toRow(HearingProjection p) {
         return new HearingScheduleRow(
+            p.hearingId().toString(),
             p.caseId().toString(),
             p.caseNumber(),
             p.hearingType(),
@@ -149,7 +184,7 @@ public class HearingScheduleService {
 
     private String badgeClass(String status) {
         return switch (status == null ? "" : status.toUpperCase(Locale.ENGLISH)) {
-            case "SCHEDULED" -> "badge--green";
+            case "SCHEDULED" -> "badge--blue";
             case "COMPLETED" -> "badge--gray";
             case "ADJOURNED" -> "badge--amber";
             case "CANCELLED" -> "badge--red";

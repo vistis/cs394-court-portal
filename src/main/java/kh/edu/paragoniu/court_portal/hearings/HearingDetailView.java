@@ -2,15 +2,17 @@ package kh.edu.paragoniu.court_portal.hearings;
 
 import java.io.Serializable;
 
-/** A single row on the global Hearings Schedule table (display-ready). */
-public record HearingScheduleRow(
+/** Display-ready detail of a single hearing for the Hearing Details page. */
+public record HearingDetailView(
     String hearingId,
     String caseId,
     String caseNumber,
+    String caseTitle,
     String hearingType,
     String courtroom,
-    String startTime,
-    String endTime,
+    Integer courtroomId,
     String status,
-    String badgeClass
+    String badgeClass,
+    String startTime,
+    String endTime
 ) implements Serializable {}

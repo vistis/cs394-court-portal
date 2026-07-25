@@ -1,19 +1,18 @@
-package kh.edu.paragoniu.court_portal.cases;
+package kh.edu.paragoniu.court_portal.greffier;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 /**
- * View model for a single row in the Cases Directory table.
+ * Display-ready row for the greffier "Assigned Cases" table.
  * Serializable so paginated results can be cached in Redis.
  */
-public record CaseRow(
-    UUID caseId,
+public record AssignedCaseRow(
+    String caseId,
     String caseNumber,
     String title,
     String classification,
     String status,
     String badgeClass,
-    String filedDate,
-    String assignedJudge
+    String assignedBy,
+    String assignedAt
 ) implements Serializable {}

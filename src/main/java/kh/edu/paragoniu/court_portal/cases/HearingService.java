@@ -20,6 +20,8 @@ import kh.edu.paragoniu.court_shared.repository.CaseRepository;
 import kh.edu.paragoniu.court_shared.repository.CourtroomRepository;
 import kh.edu.paragoniu.court_shared.repository.HearingRepository;
 import kh.edu.paragoniu.court_shared.repository.HearingTypeRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
@@ -132,12 +134,12 @@ public class HearingService {
     }
 
     @Transactional
-    @org.springframework.cache.annotation.Caching(
-        evict = {
-            @org.springframework.cache.annotation.CacheEvict(value = "publicHearings", allEntries = true),
-            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
-        }
-    )
+    @Caching(evict = {
+        @CacheEvict(value = "hearingList", allEntries = true),
+        @CacheEvict(value = "hearingDetail", allEntries = true),
+        @CacheEvict(value = "publicHearings", allEntries = true),
+        @CacheEvict(value = "publicCaseDetail", key = "#caseId")
+    })
     public UUID scheduleHearing(
         UUID caseId,
         ScheduleHearingForm form,
@@ -205,12 +207,12 @@ public class HearingService {
     }
 
     @Transactional
-    @org.springframework.cache.annotation.Caching(
-        evict = {
-            @org.springframework.cache.annotation.CacheEvict(value = "publicHearings", allEntries = true),
-            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
-        }
-    )
+    @Caching(evict = {
+        @CacheEvict(value = "hearingList", allEntries = true),
+        @CacheEvict(value = "hearingDetail", allEntries = true),
+        @CacheEvict(value = "publicHearings", allEntries = true),
+        @CacheEvict(value = "publicCaseDetail", key = "#caseId")
+    })
     public UUID rescheduleHearing(
         UUID caseId,
         UUID hearingId,
