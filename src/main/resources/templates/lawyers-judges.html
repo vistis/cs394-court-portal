@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lawyers &amp; Judges — Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('lawyers')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content">
+        <!-- Page header -->
+        <div class="page-header">
+          <div class="page-heading">
+            <h1 class="page-title">Lawyer &amp; Judges</h1>
+            <p class="page-subtitle">
+              Manage defense attorneys, prosecutors, and private counsel.
+            </p>
+          </div>
+          <a
+            th:href="${tab == 'judge'} ? @{/lawyers-judges/add-judge} : @{/lawyers-judges/add-lawyer}"
+            class="btn-primary"
+            sec:authorize="hasAuthority('CASE_CREATE')"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span th:text="${tab == 'judge'} ? 'Add Judge' : 'Add Lawyer'">Add Lawyer</span>
+          </a>
+        </div>
+
+        <div
+          class="alert alert--success"
+          th:if="${successMessage}"
+          th:text="${successMessage}"
+        >
+          Lawyer registered successfully.
+        </div>
+
+        <!-- Tabs -->
+        <nav class="detail-tabs">
+          <a
+            th:href="@{/lawyers-judges(tab='lawyer')}"
+            class="detail-tab"
+            th:classappend="${tab != 'judge'} ? 'detail-tab--active' : ''"
+            >Lawyer</a
+          >
+          <a
+            th:href="@{/lawyers-judges(tab='judge')}"
+            class="detail-tab"
+            th:classappend="${tab == 'judge'} ? 'detail-tab--active' : ''"
+            >Judge</a
+          >
+        </nav>
+
+        <!-- Search toolbar -->
+        <form class="toolbar toolbar--inline" method="get" th:action="@{/lawyers-judges}">
+          <input type="hidden" name="tab" th:value="${tab}" />
+          <div class="field field--search">
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input
+                class="input"
+                type="text"
+                name="query"
+                th:value="${query}"
+                th:placeholder="${tab == 'judge'} ? 'Search by Judge Name...' : 'Search by Name or Bar Number...'"
+              />
+            </div>
+          </div>
+
+          <div class="field" th:if="${tab == 'judge'}">
+            <select class="select" name="status">
+              <option value="" th:selected="${selectedStatus == null or selectedStatus == ''}">
+                Status: All
+              </option>
+              <option value="active" th:selected="${selectedStatus == 'active'}">Active</option>
+              <option value="inactive" th:selected="${selectedStatus == 'inactive'}">
+                Inactive / Retired
+              </option>
+            </select>
+          </div>
+
+          <div class="toolbar-actions">
+            <button type="submit" class="btn-secondary">Search</button>
+            <a th:href="@{/lawyers-judges(tab=${tab})}" class="btn-link">Clear Filters</a>
+          </div>
+        </form>
+
+        <!-- Results table -->
+        <div class="table-card">
+          <div class="table-scroll">
+            <!-- Lawyer tab -->
+            <table class="data-table" th:if="${tab != 'judge'}">
+              <thead>
+                <tr>
+                  <th>Lawyer Name</th>
+                  <th>Bar Number</th>
+                  <th>Firm / Office</th>
+                  <th class="text-center">Active Cases</th>
+                  <th class="table-actions-header">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${page.content}">
+                  <td>
+                    <span class="cell-strong" th:text="${row.name}">Elena Rodriguez</span>
+                  </td>
+                  <td class="muted" th:text="${row.barNumber}">NY-784920</td>
+                  <td class="muted" th:text="${row.firmOffice}">Rodriguez &amp; Partners Law</td>
+                  <td class="text-center" th:text="${row.activeCases}">0</td>
+                  <td class="table-actions table-actions--center">
+                    <a href="#" title="Edit lawyer" aria-label="Edit lawyer">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </a>
+                  </td>
+                </tr>
+                <tr th:if="${page.empty}">
+                  <td colspan="5" class="table-empty">No lawyers found.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Judge tab -->
+            <table class="data-table" th:if="${tab == 'judge'}">
+              <thead>
+                <tr>
+                  <th>Judge Name</th>
+                  <th>Chambers / Courtroom</th>
+                  <th>Status</th>
+                  <th class="text-center">Active Cases</th>
+                  <th class="table-actions-header">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${page.content}">
+                  <td>
+                    <span class="cell-strong" th:text="${row.name}">Hon. Sarah Jenkins</span>
+                  </td>
+                  <td class="muted" th:text="${row.chambers}">N/A</td>
+                  <td>
+                    <span
+                      class="badge"
+                      th:classappend="${row.statusBadgeClass}"
+                      th:text="${row.status}"
+                      >Active</span
+                    >
+                  </td>
+                  <td class="text-center" th:text="${row.activeCases}">0</td>
+                  <td class="table-actions table-actions--center">
+                    <a href="#" title="Edit judge" aria-label="Edit judge">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </a>
+                  </td>
+                </tr>
+                <tr th:if="${page.empty}">
+                  <td colspan="5" class="table-empty">No judges found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <span
+              class="pagination-info"
+              th:text="|Showing ${page.numberOfElements == 0 ? 0 : page.number * page.size + 1}-${page.number * page.size + page.numberOfElements} of ${page.totalElements} ${tab == 'judge' ? 'judges' : 'lawyers'}|"
+              >Showing 1-8 of 84 lawyers</span
+            >
+            <div class="pagination-btns">
+              <a
+                class="page-btn"
+                th:classappend="${page.first} ? 'page-btn--disabled' : ''"
+                th:href="${page.first} ? '#' : @{/lawyers-judges(tab=${tab},query=${query},status=${selectedStatus},page=${page.number - 1})}"
+                >Previous</a
+              >
+              <a
+                class="page-btn"
+                th:classappend="${page.last} ? 'page-btn--disabled' : ''"
+                th:href="${page.last} ? '#' : @{/lawyers-judges(tab=${tab},query=${query},status=${selectedStatus},page=${page.number + 1})}"
+                >Next</a
+              >
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
