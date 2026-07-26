@@ -2667,6 +2667,84 @@ body {
   transform: translateX(3px);
 }
 
+/* ---- Settings taxonomy management pages ---- */
+.tax-add {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tax-add-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.tax-add-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.tax-add-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.tax-add-form .form-input {
+  width: 100%;
+}
+
+.tax-add-form .btn-primary {
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.tax-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+}
+
+.tax-del-form {
+  margin: 0;
+  display: inline;
+}
+
+.tax-del--active {
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.tax-del--active:hover {
+  background: #fee2e2;
+}
+
+.tax-del--locked {
+  color: var(--border);
+  cursor: not-allowed;
+}
+
+.tax-footnote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 2px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.tax-footnote svg {
+  flex: none;
+}
+
 @media (max-width: 860px) {
   .settings-grid {
     grid-template-columns: minmax(0, 1fr);
