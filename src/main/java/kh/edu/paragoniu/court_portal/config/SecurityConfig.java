@@ -114,6 +114,8 @@ public class SecurityConfig {
                     .hasAuthority("CASE_CREATE")
                     .requestMatchers(HttpMethod.GET, "/participants")
                     .hasAuthority("CASE_VIEW")
+                    .requestMatchers(HttpMethod.GET, "/settings")
+                    .hasAuthority("CASE_VIEW")
                     .anyRequest()
                     .authenticated()
             )
