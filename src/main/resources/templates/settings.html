@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>System Settings — Court Panel</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('settings')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content">
+        <div class="page-header">
+          <div class="page-heading">
+            <h1 class="page-title">System Settings</h1>
+            <p class="page-subtitle">
+              Configure master data and administrative options for the court
+              system. Manage the underlying taxonomy and status workflows that
+              drive legal proceedings.
+            </p>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          <!-- Case Classifications -->
+          <a th:href="@{/settings/case-classifications}" class="settings-card">
+            <span class="settings-card-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5l2 3h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+            </span>
+            <h2 class="settings-card-title">Manage Case Classifications</h2>
+            <p class="settings-card-desc">
+              Define the categories and standard codes used for new case filings
+              across civil and criminal divisions.
+            </p>
+            <span class="settings-card-arrow" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </a>
+
+          <!-- Case Status -->
+          <a th:href="@{/settings/case-statuses}" class="settings-card">
+            <span class="settings-card-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+            </span>
+            <h2 class="settings-card-title">Manage Case Status</h2>
+            <p class="settings-card-desc">
+              Configure the lifecycle status badges (e.g., Open, Adjourned,
+              Closed) and transition requirements for each phase.
+            </p>
+            <span class="settings-card-arrow" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </a>
+
+          <!-- Hearing Type -->
+          <a th:href="@{/settings/hearing-types}" class="settings-card">
+            <span class="settings-card-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14 13-7.5 7.5a2.12 2.12 0 0 1-3-3L11 10"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></svg>
+            </span>
+            <h2 class="settings-card-title">Manage Hearing Type</h2>
+            <p class="settings-card-desc">
+              Set up standard court appearance categories such as Arraignment,
+              Preliminary Hearing, and Trial types.
+            </p>
+            <span class="settings-card-arrow" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </a>
+
+          <!-- Disposition Outcome -->
+          <a th:href="@{/settings/disposition-outcomes}" class="settings-card">
+            <span class="settings-card-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="m5 7-2.5 6a3 3 0 0 0 5 0z"/><path d="m19 7-2.5 6a3 3 0 0 0 5 0z"/><path d="M8 21h8"/></svg>
+            </span>
+            <h2 class="settings-card-title">Manage Disposition Outcome</h2>
+            <p class="settings-card-desc">
+              Define official resolution types for closed and appealed cases to
+              ensure consistent judicial reporting.
+            </p>
+            <span class="settings-card-arrow" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </a>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
