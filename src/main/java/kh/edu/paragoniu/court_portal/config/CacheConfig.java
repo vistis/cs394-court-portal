@@ -64,10 +64,14 @@ public class CacheConfig {
         caches.put("judgeList", base.entryTtl(LIST_TTL));
         caches.put("publicCases", base.entryTtl(LIST_TTL));
         caches.put("publicHearings", base.entryTtl(LIST_TTL));
+        caches.put("lawyerCases", base.entryTtl(LIST_TTL));
+        caches.put("judgeCases", base.entryTtl(LIST_TTL));
         // Details (single records)
         caches.put("hearingDetail", base.entryTtl(DETAIL_TTL));
         caches.put("caseDetail", base.entryTtl(DETAIL_TTL));
         caches.put("publicCaseDetail", base.entryTtl(DETAIL_TTL));
+        caches.put("lawyerDetail", base.entryTtl(DETAIL_TTL));
+        caches.put("judgeDetail", base.entryTtl(DETAIL_TTL));
         // Reference / lookup data
         caches.put("greffierNames", base.entryTtl(REF_TTL));
         caches.put("refData", base.entryTtl(REF_TTL));
