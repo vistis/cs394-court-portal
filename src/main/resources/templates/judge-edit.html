@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|Edit ${profile.name} — Court Panel|">Edit Judge</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('lawyers')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <div class="breadcrumb">
+          <a th:href="@{/lawyers-judges/judges/{id}(id=${profile.judgeId})}"
+            >Lawyers &amp; Judges</a
+          >
+          <span>&gt;</span>
+          <span>Profile</span>
+        </div>
+
+        <form
+          method="post"
+          enctype="multipart/form-data"
+          th:action="@{/lawyers-judges/judges/{id}/edit(id=${profile.judgeId})}"
+          th:object="${editJudgeForm}"
+        >
+          <div
+            class="alert alert--error"
+            th:if="${#fields.hasGlobalErrors()}"
+            th:each="err : ${#fields.globalErrors()}"
+            th:text="${err}"
+          >
+            Unable to update judge.
+          </div>
+
+          <!-- Header card -->
+          <section class="detail-hero">
+            <div class="detail-hero-main">
+              <div
+                class="avatar avatar--lg"
+                th:if="${profile.profileImageUrl == null}"
+                th:text="${profile.initials}"
+              >
+                SJ
+              </div>
+              <img
+                class="avatar avatar--lg"
+                th:if="${profile.profileImageUrl != null}"
+                th:src="${profile.profileImageUrl}"
+                th:alt="${profile.name}"
+              />
+              <div>
+                <h1 class="detail-title" th:text="${profile.name}">
+                  Sarah Jenkins
+                </h1>
+              </div>
+            </div>
+            <div class="hero-upload">
+              <label class="btn-outline btn-icon" for="profileImage">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload Profile</span>
+                <input
+                  id="profileImage"
+                  type="file"
+                  name="profileImage"
+                  accept="image/jpeg,image/png"
+                  hidden
+                  data-file-input
+                />
+              </label>
+              <span class="upload-filename" data-file-name></span>
+              <p
+                class="form-error"
+                th:if="${#fields.hasErrors('profileImage')}"
+                th:errors="*{profileImage}"
+              ></p>
+            </div>
+          </section>
+
+          <!-- Judge Information -->
+          <section class="detail-panel">
+            <h2 class="detail-panel-title">Judge Information</h2>
+            <div class="form-grid-2 form-grid--spaced">
+              <div class="form-field">
+                <label class="form-label" for="firstName">First Name</label>
+                <input
+                  class="form-input"
+                  id="firstName"
+                  type="text"
+                  th:field="*{firstName}"
+                  placeholder="e.g., Sarah"
+                />
+                <p
+                  class="form-error"
+                  th:if="${#fields.hasErrors('firstName')}"
+                  th:errors="*{firstName}"
+                ></p>
+              </div>
+              <div class="form-field">
+                <label class="form-label" for="lastName">Last Name</label>
+                <input
+                  class="form-input"
+                  id="lastName"
+                  type="text"
+                  th:field="*{lastName}"
+                  placeholder="e.g., Jenkins"
+                />
+                <p
+                  class="form-error"
+                  th:if="${#fields.hasErrors('lastName')}"
+                  th:errors="*{lastName}"
+                ></p>
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label class="form-label" for="barNumber">Bar Number</label>
+                <input
+                  class="form-input"
+                  id="barNumber"
+                  type="text"
+                  th:field="*{barNumber}"
+                  placeholder="e.g., NY-784888"
+                />
+                <p
+                  class="form-error"
+                  th:if="${#fields.hasErrors('barNumber')}"
+                  th:errors="*{barNumber}"
+                ></p>
+              </div>
+              <div class="form-field"></div>
+            </div>
+          </section>
+
+          <div class="form-actions form-actions--end">
+            <a
+              th:href="@{/lawyers-judges/judges/{id}(id=${profile.judgeId})}"
+              class="btn-outline"
+              >Cancel</a
+            >
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <script th:inline="none">
+      (function () {
+        const input = document.querySelector("[data-file-input]");
+        const nameEl = document.querySelector("[data-file-name]");
+        if (!input || !nameEl) return;
+        input.addEventListener("change", function () {
+          nameEl.textContent = input.files.length ? input.files[0].name : "";
+        });
+      })();
+    </script>
+  </body>
+</html>

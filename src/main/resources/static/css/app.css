@@ -2766,3 +2766,86 @@ body {
   color: var(--text-muted);
   white-space: nowrap;
 }
+
+/* ---- Lawyer/Judge profile ---- */
+.btn-icon {
+  gap: 8px;
+}
+
+.hero-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.upload-filename {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-grid--spaced {
+  margin-top: 22px;
+}
+
+/* Involved Cases panel */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.panel-action:hover {
+  text-decoration: underline;
+}
+
+.involved-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 20px;
+}
+
+.involved-row {
+  border: 1px solid var(--border-soft);
+  text-decoration: none;
+}
+
+.involved-row:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.involved-row-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.involved-arrow {
+  color: var(--text-muted);
+}
+
+.involved-sep {
+  margin: 0 4px;
+  color: var(--text-muted);
+}

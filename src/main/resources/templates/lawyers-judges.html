@@ -43,6 +43,14 @@
           Lawyer registered successfully.
         </div>
 
+        <div
+          class="alert alert--error"
+          th:if="${errorMessage}"
+          th:text="${errorMessage}"
+        >
+          Something went wrong.
+        </div>
+
         <!-- Tabs -->
         <nav class="detail-tabs">
           <a
@@ -110,12 +118,26 @@
               <tbody>
                 <tr th:each="row : ${page.content}">
                   <td>
-                    <span class="cell-strong" th:text="${row.name}">Elena Rodriguez</span>
+                    <a
+                      class="cell-link cell-strong"
+                      th:href="@{/lawyers-judges/lawyers/{id}(id=${row.lawyerId})}"
+                      th:text="${row.name}"
+                      >Elena Rodriguez</a
+                    >
                   </td>
                   <td class="muted" th:text="${row.barNumber}">NY-784920</td>
                   <td class="muted" th:text="${row.firmOffice}">Rodriguez &amp; Partners Law</td>
                   <td class="text-center" th:text="${row.activeCases}">0</td>
                   <td class="table-actions table-actions--center">
+                    <button
+                      type="button"
+                      class="btn-table"
+                      data-lassign-open
+                      th:attr="data-lawyer-id=${row.lawyerId},data-lawyer-name=${row.name}"
+                      sec:authorize="hasAuthority('CASE_ASSIGN')"
+                    >
+                      Assign Case
+                    </button>
                     <a href="#" title="Edit lawyer" aria-label="Edit lawyer">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                     </a>
@@ -141,7 +163,12 @@
               <tbody>
                 <tr th:each="row : ${page.content}">
                   <td>
-                    <span class="cell-strong" th:text="${row.name}">Hon. Sarah Jenkins</span>
+                    <a
+                      class="cell-link cell-strong"
+                      th:href="@{/lawyers-judges/judges/{id}(id=${row.judgeId})}"
+                      th:text="${row.name}"
+                      >Hon. Sarah Jenkins</a
+                    >
                   </td>
                   <td class="muted" th:text="${row.chambers}">N/A</td>
                   <td>
@@ -154,6 +181,15 @@
                   </td>
                   <td class="text-center" th:text="${row.activeCases}">0</td>
                   <td class="table-actions table-actions--center">
+                    <button
+                      type="button"
+                      class="btn-table"
+                      data-assign-open
+                      th:attr="data-judge-id=${row.judgeId},data-judge-name=${row.name}"
+                      sec:authorize="hasAuthority('CASE_ASSIGN')"
+                    >
+                      Assign Case
+                    </button>
                     <a href="#" title="Edit judge" aria-label="Edit judge">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                     </a>
@@ -191,5 +227,12 @@
         </div>
       </main>
     </div>
+
+    <!-- Assign Case to Judge modal (shared fragment) -->
+    <div th:replace="~{fragments/assign-modals :: judgeAssign('')}"></div>
+
+
+    <!-- Assign Case to Lawyer modal (shared fragment) -->
+    <div th:replace="~{fragments/assign-modals :: lawyerAssign('')}"></div>
   </body>
 </html>

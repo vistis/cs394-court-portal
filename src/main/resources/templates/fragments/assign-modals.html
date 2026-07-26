@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <!-- ============ ASSIGN CASE TO JUDGE modal ============ -->
+    <th:block th:fragment="judgeAssign(returnTo)">
+      <div class="modal-overlay" id="assignJudgeModal">
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="assignJudgeTitle"
+        >
+          <div class="modal-head">
+            <div>
+              <h2 class="modal-title" id="assignJudgeTitle">
+                Assign Case to Judge
+              </h2>
+              <p class="modal-subtitle">
+                Judge: <span data-assign-judge-name>—</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              class="modal-close"
+              data-assign-close
+              aria-label="Close"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <form
+            class="modal-body"
+            method="post"
+            data-assign-form
+            th:action="@{/lawyers-judges/judges/{id}/assign(id='PLACEHOLDERID')}"
+          >
+            <input type="hidden" name="caseId" data-assign-caseid />
+            <input type="hidden" name="returnTo" th:value="${returnTo}" />
+
+            <div class="form-field">
+              <label class="form-label" for="assignJudgeSearch"
+                >Search Case Number or Title <span class="req">*</span></label
+              >
+              <div class="input-wrap table-search">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                <input
+                  class="input"
+                  type="text"
+                  id="assignJudgeSearch"
+                  data-assign-search
+                  autocomplete="off"
+                  placeholder="e.g., CR-2026-0881"
+                />
+              </div>
+            </div>
+
+            <div class="assign-results" data-assign-results>
+              <p class="assign-hint">Start typing to find a case…</p>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="assignJudgeRole"
+                >Assignment Role <span class="req">*</span></label
+              >
+              <select class="select" id="assignJudgeRole" name="presiding">
+                <option value="true" selected>Presiding Judge</option>
+                <option value="false">Associate Judge</option>
+              </select>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-outline" data-assign-close>
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary" data-assign-submit disabled>
+                Confirm Assignment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <script th:inline="none">
+        (function () {
+          const overlay = document.getElementById("assignJudgeModal");
+          if (!overlay) return;
+          const form = overlay.querySelector("[data-assign-form]");
+          const actionTemplate = form.getAttribute("action");
+          const nameEl = overlay.querySelector("[data-assign-judge-name]");
+          const caseIdInput = overlay.querySelector("[data-assign-caseid]");
+          const searchInput = overlay.querySelector("[data-assign-search]");
+          const resultsBox = overlay.querySelector("[data-assign-results]");
+          const submitBtn = overlay.querySelector("[data-assign-submit]");
+          let judgeId = null;
+          let timer = null;
+
+          function open(id, name) {
+            judgeId = id;
+            form.setAttribute("action", actionTemplate.replace("PLACEHOLDERID", id));
+            nameEl.textContent = name || "—";
+            caseIdInput.value = "";
+            searchInput.value = "";
+            submitBtn.disabled = true;
+            resultsBox.innerHTML =
+              '<p class="assign-hint">Start typing to find a case…</p>';
+            overlay.classList.add("is-open");
+            setTimeout(function () {
+              searchInput.focus();
+            }, 30);
+            load("");
+          }
+          function close() {
+            overlay.classList.remove("is-open");
+          }
+
+          function select(item, opt) {
+            resultsBox
+              .querySelectorAll(".assign-item--selected")
+              .forEach(function (el) {
+                el.classList.remove("assign-item--selected");
+              });
+            item.classList.add("assign-item--selected");
+            caseIdInput.value = opt.caseId;
+            submitBtn.disabled = false;
+          }
+
+          function render(list) {
+            resultsBox.innerHTML = "";
+            if (!list || list.length === 0) {
+              resultsBox.innerHTML =
+                '<p class="assign-hint">No cases found.</p>';
+              return;
+            }
+            list.forEach(function (opt) {
+              const item = document.createElement("div");
+              item.className =
+                "assign-item" + (opt.alreadyAssigned ? " assign-item--disabled" : "");
+
+              const main = document.createElement("div");
+              main.className = "assign-item-main";
+              const num = document.createElement("span");
+              num.className = "assign-item-number";
+              num.textContent = opt.caseNumber;
+              const title = document.createElement("span");
+              title.className = "assign-item-title";
+              title.textContent = opt.title;
+              main.appendChild(num);
+              main.appendChild(title);
+
+              const right = document.createElement("div");
+              if (opt.alreadyAssigned) {
+                const tag = document.createElement("span");
+                tag.className = "assign-item-tag";
+                tag.textContent = "Assigned";
+                right.appendChild(tag);
+              } else {
+                const badge = document.createElement("span");
+                badge.className = "badge " + opt.badgeClass;
+                badge.textContent = opt.status;
+                right.appendChild(badge);
+              }
+
+              item.appendChild(main);
+              item.appendChild(right);
+
+              if (!opt.alreadyAssigned) {
+                item.addEventListener("click", function () {
+                  select(item, opt);
+                });
+              }
+              resultsBox.appendChild(item);
+            });
+          }
+
+          function load(q) {
+            if (!judgeId) return;
+            fetch(
+              "/lawyers-judges/judges/" +
+                encodeURIComponent(judgeId) +
+                "/case-search?q=" +
+                encodeURIComponent(q)
+            )
+              .then(function (r) {
+                return r.json();
+              })
+              .then(render)
+              .catch(function () {
+                resultsBox.innerHTML =
+                  '<p class="assign-hint">Could not load cases.</p>';
+              });
+          }
+
+          document.querySelectorAll("[data-assign-open]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              open(
+                btn.getAttribute("data-judge-id"),
+                btn.getAttribute("data-judge-name")
+              );
+            });
+          });
+          overlay.querySelectorAll("[data-assign-close]").forEach(function (b) {
+            b.addEventListener("click", close);
+          });
+          overlay.addEventListener("mousedown", function (e) {
+            if (e.target === overlay) close();
+          });
+          document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") close();
+          });
+          searchInput.addEventListener("input", function () {
+            const q = searchInput.value;
+            caseIdInput.value = "";
+            submitBtn.disabled = true;
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+              load(q);
+            }, 200);
+          });
+        })();
+      </script>
+    </th:block>
+
+    <!-- ============ ASSIGN CASE TO LAWYER modal (two-step: case -> party) ============ -->
+    <th:block th:fragment="lawyerAssign(returnTo)">
+      <div class="modal-overlay" id="assignLawyerModal">
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="assignLawyerTitle"
+        >
+          <div class="modal-head">
+            <div>
+              <h2 class="modal-title" id="assignLawyerTitle">
+                Assign Case to Lawyer
+              </h2>
+              <p class="modal-subtitle">
+                Lawyer: <span data-lassign-lawyer-name>—</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              class="modal-close"
+              data-lassign-close
+              aria-label="Close"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <form
+            class="modal-body"
+            method="post"
+            data-lassign-form
+            th:action="@{/lawyers-judges/lawyers/{id}/assign(id='PLACEHOLDERID')}"
+          >
+            <input type="hidden" name="caseId" data-lassign-caseid />
+            <input type="hidden" name="participantId" data-lassign-participantid />
+            <input type="hidden" name="returnTo" th:value="${returnTo}" />
+
+            <div class="form-field">
+              <label class="form-label" for="assignLawyerSearch"
+                >Search Case Number or Title <span class="req">*</span></label
+              >
+              <div class="input-wrap table-search">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                <input
+                  class="input"
+                  type="text"
+                  id="assignLawyerSearch"
+                  data-lassign-search
+                  autocomplete="off"
+                  placeholder="e.g., CR-2026-0881"
+                />
+              </div>
+            </div>
+
+            <div class="assign-results" data-lassign-results>
+              <p class="assign-hint">Start typing to find a case…</p>
+            </div>
+
+            <div class="form-field" data-lassign-party-section hidden>
+              <label class="form-label"
+                >Party Represented <span class="req">*</span></label
+              >
+              <div class="assign-results" data-lassign-parties>
+                <p class="assign-hint">Select a case first…</p>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-outline" data-lassign-close>
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary" data-lassign-submit disabled>
+                Confirm Assignment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <script th:inline="none">
+        (function () {
+          const overlay = document.getElementById("assignLawyerModal");
+          if (!overlay) return;
+          const form = overlay.querySelector("[data-lassign-form]");
+          const actionTemplate = form.getAttribute("action");
+          const nameEl = overlay.querySelector("[data-lassign-lawyer-name]");
+          const caseIdInput = overlay.querySelector("[data-lassign-caseid]");
+          const participantInput = overlay.querySelector("[data-lassign-participantid]");
+          const searchInput = overlay.querySelector("[data-lassign-search]");
+          const resultsBox = overlay.querySelector("[data-lassign-results]");
+          const partySection = overlay.querySelector("[data-lassign-party-section]");
+          const partiesBox = overlay.querySelector("[data-lassign-parties]");
+          const submitBtn = overlay.querySelector("[data-lassign-submit]");
+          let lawyerId = null;
+          let timer = null;
+
+          function resetParties() {
+            participantInput.value = "";
+            partySection.hidden = true;
+            partiesBox.innerHTML =
+              '<p class="assign-hint">Select a case first…</p>';
+            submitBtn.disabled = true;
+          }
+
+          function open(id, name) {
+            lawyerId = id;
+            form.setAttribute("action", actionTemplate.replace("PLACEHOLDERID", id));
+            nameEl.textContent = name || "—";
+            caseIdInput.value = "";
+            searchInput.value = "";
+            resetParties();
+            resultsBox.innerHTML =
+              '<p class="assign-hint">Start typing to find a case…</p>';
+            overlay.classList.add("is-open");
+            setTimeout(function () {
+              searchInput.focus();
+            }, 30);
+            loadCases("");
+          }
+          function close() {
+            overlay.classList.remove("is-open");
+          }
+
+          function selectCase(item, opt) {
+            resultsBox
+              .querySelectorAll(".assign-item--selected")
+              .forEach(function (el) {
+                el.classList.remove("assign-item--selected");
+              });
+            item.classList.add("assign-item--selected");
+            caseIdInput.value = opt.caseId;
+            resetParties();
+            partySection.hidden = false;
+            partiesBox.innerHTML =
+              '<p class="assign-hint">Loading parties…</p>';
+            loadParties(opt.caseId);
+          }
+
+          function selectParty(item, opt) {
+            partiesBox
+              .querySelectorAll(".assign-item--selected")
+              .forEach(function (el) {
+                el.classList.remove("assign-item--selected");
+              });
+            item.classList.add("assign-item--selected");
+            participantInput.value = opt.participantId;
+            submitBtn.disabled = false;
+          }
+
+          function renderCases(list) {
+            resultsBox.innerHTML = "";
+            if (!list || list.length === 0) {
+              resultsBox.innerHTML = '<p class="assign-hint">No cases found.</p>';
+              return;
+            }
+            list.forEach(function (opt) {
+              const item = document.createElement("div");
+              item.className = "assign-item";
+              const main = document.createElement("div");
+              main.className = "assign-item-main";
+              const num = document.createElement("span");
+              num.className = "assign-item-number";
+              num.textContent = opt.caseNumber;
+              const title = document.createElement("span");
+              title.className = "assign-item-title";
+              title.textContent = opt.title;
+              main.appendChild(num);
+              main.appendChild(title);
+              const right = document.createElement("div");
+              const badge = document.createElement("span");
+              badge.className = "badge " + opt.badgeClass;
+              badge.textContent = opt.status;
+              right.appendChild(badge);
+              item.appendChild(main);
+              item.appendChild(right);
+              item.addEventListener("click", function () {
+                selectCase(item, opt);
+              });
+              resultsBox.appendChild(item);
+            });
+          }
+
+          function renderParties(list) {
+            partiesBox.innerHTML = "";
+            if (!list || list.length === 0) {
+              partiesBox.innerHTML =
+                '<p class="assign-hint">No parties on this case.</p>';
+              return;
+            }
+            list.forEach(function (opt) {
+              const item = document.createElement("div");
+              item.className =
+                "assign-item" + (opt.alreadyAssigned ? " assign-item--disabled" : "");
+              const main = document.createElement("div");
+              main.className = "assign-item-main";
+              const nm = document.createElement("span");
+              nm.className = "assign-item-number";
+              nm.textContent = opt.name;
+              const sub = document.createElement("span");
+              sub.className = "assign-item-title";
+              sub.textContent = opt.partyType + " · " + opt.role;
+              main.appendChild(nm);
+              main.appendChild(sub);
+              const right = document.createElement("div");
+              if (opt.alreadyAssigned) {
+                const tag = document.createElement("span");
+                tag.className = "assign-item-tag";
+                tag.textContent = "Represented";
+                right.appendChild(tag);
+              }
+              item.appendChild(main);
+              item.appendChild(right);
+              if (!opt.alreadyAssigned) {
+                item.addEventListener("click", function () {
+                  selectParty(item, opt);
+                });
+              }
+              partiesBox.appendChild(item);
+            });
+          }
+
+          function loadCases(q) {
+            if (!lawyerId) return;
+            fetch(
+              "/lawyers-judges/lawyers/" +
+                encodeURIComponent(lawyerId) +
+                "/case-search?q=" +
+                encodeURIComponent(q)
+            )
+              .then(function (r) {
+                return r.json();
+              })
+              .then(renderCases)
+              .catch(function () {
+                resultsBox.innerHTML =
+                  '<p class="assign-hint">Could not load cases.</p>';
+              });
+          }
+
+          function loadParties(caseId) {
+            if (!lawyerId) return;
+            fetch(
+              "/lawyers-judges/lawyers/" +
+                encodeURIComponent(lawyerId) +
+                "/case/" +
+                encodeURIComponent(caseId) +
+                "/participants"
+            )
+              .then(function (r) {
+                return r.json();
+              })
+              .then(renderParties)
+              .catch(function () {
+                partiesBox.innerHTML =
+                  '<p class="assign-hint">Could not load parties.</p>';
+              });
+          }
+
+          document.querySelectorAll("[data-lassign-open]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              open(
+                btn.getAttribute("data-lawyer-id"),
+                btn.getAttribute("data-lawyer-name")
+              );
+            });
+          });
+          overlay.querySelectorAll("[data-lassign-close]").forEach(function (b) {
+            b.addEventListener("click", close);
+          });
+          overlay.addEventListener("mousedown", function (e) {
+            if (e.target === overlay) close();
+          });
+          document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") close();
+          });
+          searchInput.addEventListener("input", function () {
+            const q = searchInput.value;
+            caseIdInput.value = "";
+            resetParties();
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+              loadCases(q);
+            }, 200);
+          });
+        })();
+      </script>
+    </th:block>
+  </body>
+</html>
