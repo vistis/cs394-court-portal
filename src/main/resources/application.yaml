@@ -34,8 +34,7 @@ spring:
 
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/}
-      database: ${MONGODB_DATABASE:court}
+      uri: ${MONGODB_URI:mongodb://localhost:27017/court}
       auto-index-creation: true
 
     redis:
