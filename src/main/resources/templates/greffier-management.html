@@ -107,7 +107,11 @@
               th:text="|Showing ${page.numberOfElements == 0 ? 0 : page.number * page.size + 1}-${page.number * page.size + page.numberOfElements} of ${page.totalElements} greffiers|"
               >Showing 1-8 of 4 greffiers</span
             >
-            <div class="pagination-pages">
+            <div
+              class="pagination-pages"
+              th:with="windowStart=${T(java.lang.Math).max(0, page.number - 2)},
+                       windowEnd=${T(java.lang.Math).min(page.totalPages - 1, page.number + 2)}"
+            >
               <a
                 class="page-num page-chevron"
                 th:classappend="${page.first} ? 'page-num--disabled' : ''"
@@ -116,14 +120,40 @@
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
               </a>
+
+              <!-- First page + leading ellipsis -->
               <a
-                th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                th:if="${windowStart > 0}"
+                class="page-num"
+                th:href="@{/greffiers(query=${query},page=0)}"
+                >1</a
+              >
+              <span th:if="${windowStart > 1}" class="page-ellipsis">…</span>
+
+              <!-- Windowed page numbers around the current page -->
+              <a
+                th:each="i : ${#numbers.sequence(windowStart, windowEnd)}"
                 class="page-num"
                 th:classappend="${i == page.number} ? 'page-num--active' : ''"
                 th:href="@{/greffiers(query=${query},page=${i})}"
                 th:text="${i + 1}"
                 >1</a
               >
+
+              <!-- Trailing ellipsis + last page -->
+              <span
+                th:if="${windowEnd < page.totalPages - 2}"
+                class="page-ellipsis"
+                >…</span
+              >
+              <a
+                th:if="${windowEnd < page.totalPages - 1}"
+                class="page-num"
+                th:href="@{/greffiers(query=${query},page=${page.totalPages - 1})}"
+                th:text="${page.totalPages}"
+                >300</a
+              >
+
               <a
                 class="page-num page-chevron"
                 th:classappend="${page.last} ? 'page-num--disabled' : ''"

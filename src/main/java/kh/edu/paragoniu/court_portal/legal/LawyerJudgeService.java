@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import kh.edu.paragoniu.court_portal.cases.AssignPersonOption;
 import kh.edu.paragoniu.court_portal.cases.CaseDetailNotFoundException;
 import kh.edu.paragoniu.court_shared.entity.Case;
 import kh.edu.paragoniu.court_shared.entity.CaseJudge;
@@ -270,9 +271,68 @@ public class LawyerJudgeService {
      * and the judge's involved-cases cache. Returns the case number for the
      * confirmation message.
      */
+    /**
+     * Judge suggestions for the quick-assign popup on the Case Detail page —
+     * the reverse of {@link #searchAssignableCasesForJudge}: given a case, find
+     * judges to add. Only active judges are offered; judges already on the case
+     * are flagged (not hidden). Not cached — it changes per keystroke.
+     */
+    @Transactional(readOnly = true)
+    public List<AssignPersonOption> searchAssignableJudgesForCase(
+        UUID caseId,
+        String query,
+        int limit
+    ) {
+        Set<UUID> assigned = new HashSet<>(
+            entityManager
+                .createQuery(
+                    "SELECT cj.judgeEntity.judgeId FROM CaseJudge cj " +
+                    "WHERE cj.caseEntity.caseId = :cid",
+                    UUID.class
+                )
+                .setParameter("cid", caseId)
+                .getResultList()
+        );
+
+        boolean hasQuery = query != null && !query.isBlank();
+        String jpql = "SELECT j FROM Judge j WHERE j.isActive = true";
+        if (hasQuery) {
+            jpql +=
+                " AND (LOWER(j.firstName) LIKE :q OR LOWER(j.lastName) LIKE :q " +
+                "OR LOWER(CONCAT(j.firstName, ' ', j.lastName)) LIKE :q " +
+                "OR LOWER(j.licenseNumber) LIKE :q)";
+        }
+        jpql += " ORDER BY j.lastName, j.firstName";
+
+        TypedQuery<Judge> q = entityManager.createQuery(jpql, Judge.class);
+        if (hasQuery) {
+            q.setParameter("q", "%" + query.toLowerCase(Locale.ENGLISH).trim() + "%");
+        }
+        q.setMaxResults(limit);
+
+        return q
+            .getResultList()
+            .stream()
+            .map(j ->
+                new AssignPersonOption(
+                    j.getJudgeId().toString(),
+                    "Hon. " + fullName(j.getFirstName(), j.getLastName()),
+                    j.getLicenseNumber() == null || j.getLicenseNumber().isBlank()
+                        ? "Judge"
+                        : j.getLicenseNumber(),
+                    assigned.contains(j.getJudgeId())
+                )
+            )
+            .toList();
+    }
+
     @Caching(evict = {
         @CacheEvict(value = "judgeList", allEntries = true),
-        @CacheEvict(value = "judgeCases", allEntries = true)
+        @CacheEvict(value = "judgeCases", allEntries = true),
+        @CacheEvict(value = "caseList", allEntries = true),
+        @CacheEvict(value = "caseDetail", key = "#caseId"),
+        @CacheEvict(value = "publicCases", allEntries = true),
+        @CacheEvict(value = "publicCaseDetail", key = "#caseId")
     })
     @Transactional
     public String assignCaseToJudge(UUID judgeId, UUID caseId, boolean presiding) {
