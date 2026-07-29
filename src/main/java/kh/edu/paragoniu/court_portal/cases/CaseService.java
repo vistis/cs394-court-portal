@@ -33,6 +33,8 @@ import kh.edu.paragoniu.court_shared.repository.CaseRepository;
 import kh.edu.paragoniu.court_shared.repository.AppealRepository;
 import kh.edu.paragoniu.court_shared.repository.DispositionOutcomeRepository;
 import kh.edu.paragoniu.court_shared.repository.DispositionRepository;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -43,6 +45,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 public class CaseService {
@@ -71,6 +75,7 @@ public class CaseService {
     private final DispositionOutcomeRepository dispositionOutcomeRepository;
     private final AppealRepository appealRepository;
     private final MongoTemplate mongoTemplate;
+    private final CacheManager cacheManager;
 
     public CaseService(
         EntityManager entityManager,
@@ -80,7 +85,8 @@ public class CaseService {
         DispositionRepository dispositionRepository,
         DispositionOutcomeRepository dispositionOutcomeRepository,
         AppealRepository appealRepository,
-        MongoTemplate mongoTemplate
+        MongoTemplate mongoTemplate,
+        CacheManager cacheManager
     ) {
         this.entityManager = entityManager;
         this.caseRepository = caseRepository;
@@ -90,6 +96,7 @@ public class CaseService {
         this.dispositionOutcomeRepository = dispositionOutcomeRepository;
         this.appealRepository = appealRepository;
         this.mongoTemplate = mongoTemplate;
+        this.cacheManager = cacheManager;
     }
 
     @Cacheable("caseList")
@@ -419,14 +426,6 @@ public class CaseService {
     }
 
     @Transactional
-    @org.springframework.cache.annotation.Caching(
-        put = { @org.springframework.cache.annotation.CachePut(value = "caseDetail", key = "#caseId") },
-        evict = {
-            @org.springframework.cache.annotation.CacheEvict(value = "caseList", allEntries = true),
-            @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true),
-            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
-        }
-    )
     public CaseDetailView updateStatus(
         UUID caseId,
         Integer newStatusId,
@@ -489,16 +488,17 @@ public class CaseService {
             performedById,
             now
         );
-        return findDetail(caseId);
+        CaseDetailView updated = findDetail(caseId);
+        scheduleAfterCommit(() -> {
+            clearCache("caseList");
+            clearCache("publicCases");
+            evictCache("publicCaseDetail", caseId);
+            putCache("caseDetail", caseId, updated);
+        });
+        return updated;
     }
 
     @Transactional
-    @org.springframework.cache.annotation.Caching(
-        evict = {
-            @org.springframework.cache.annotation.CacheEvict(value = "caseList", allEntries = true),
-            @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true)
-        }
-    )
     public UUID createCase(CreateCaseForm form, UUID performedById) {
         CaseClassification classification = classificationRepository
             .findById(form.getClassificationId())
@@ -551,18 +551,14 @@ public class CaseService {
             now
         );
 
+        scheduleAfterCommit(() -> {
+            clearCache("caseList");
+            clearCache("publicCases");
+        });
         return caseId;
     }
 
     @Transactional
-    @org.springframework.cache.annotation.Caching(
-        evict = {
-            @org.springframework.cache.annotation.CacheEvict(value = "caseList", allEntries = true),
-            @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true),
-            @org.springframework.cache.annotation.CacheEvict(value = "caseDetail", key = "#caseId"),
-            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
-        }
-    )
     public UUID createDisposition(
         UUID caseId,
         CreateDispositionForm form,
@@ -622,18 +618,17 @@ public class CaseService {
             now
         );
 
+        UUID dispositionCaseId = caseId;
+        scheduleAfterCommit(() -> {
+            clearCache("caseList");
+            clearCache("publicCases");
+            evictCache("caseDetail", dispositionCaseId);
+            evictCache("publicCaseDetail", dispositionCaseId);
+        });
         return disposition.getDispositionId();
     }
 
     @Transactional
-    @org.springframework.cache.annotation.Caching(
-        evict = {
-            @org.springframework.cache.annotation.CacheEvict(value = "caseList", allEntries = true),
-            @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true),
-            @org.springframework.cache.annotation.CacheEvict(value = "caseDetail", key = "#originalCaseId"),
-            @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#originalCaseId")
-        }
-    )
     public UUID initiateAppeal(UUID originalCaseId, UUID performedById) {
         Disposition disposition = dispositionRepository
             .findByCaseEntityCaseId(originalCaseId)
@@ -711,7 +706,52 @@ public class CaseService {
             now
         );
 
+        scheduleAfterCommit(() -> {
+            clearCache("caseList");
+            clearCache("publicCases");
+            evictCache("caseDetail", originalCaseId);
+            evictCache("publicCaseDetail", originalCaseId);
+        });
         return appellateCase.getCaseId();
+    }
+
+    /**
+     * Registers a post-commit callback rather than annotating write methods
+     * with @CacheEvict/@CachePut: @Transactional and cache-eviction advice
+     * stacked on the same method have no guaranteed ordering, so eviction
+     * could otherwise fire before the write commits and let a concurrent
+     * read repopulate the cache with stale (pre-commit) data.
+     */
+    private void scheduleAfterCommit(Runnable eviction) {
+        TransactionSynchronizationManager.registerSynchronization(
+            new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    eviction.run();
+                }
+            }
+        );
+    }
+
+    private void clearCache(String cacheName) {
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache != null) {
+            cache.clear();
+        }
+    }
+
+    private void evictCache(String cacheName, Object key) {
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache != null) {
+            cache.evict(key);
+        }
+    }
+
+    private void putCache(String cacheName, Object key, Object value) {
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache != null) {
+            cache.put(key, value);
+        }
     }
 
     private CaseStatus findInitialStatusReference() {

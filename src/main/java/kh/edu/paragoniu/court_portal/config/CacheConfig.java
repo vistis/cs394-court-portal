@@ -66,6 +66,8 @@ public class CacheConfig {
         caches.put("publicHearings", base.entryTtl(LIST_TTL));
         caches.put("lawyerCases", base.entryTtl(LIST_TTL));
         caches.put("judgeCases", base.entryTtl(LIST_TTL));
+        caches.put("caseParticipants", base.entryTtl(LIST_TTL));
+        caches.put("participantsDirectory", base.entryTtl(LIST_TTL));
         // Details (single records)
         caches.put("hearingDetail", base.entryTtl(DETAIL_TTL));
         caches.put("caseDetail", base.entryTtl(DETAIL_TTL));
