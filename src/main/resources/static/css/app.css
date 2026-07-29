@@ -588,11 +588,11 @@ body {
   transition: transform 0.15s ease;
 }
 
-.toggle-input:checked + .toggle-track {
+.toggle-input:checked ~ .toggle-track {
   background: var(--accent);
 }
 
-.toggle-input:checked + .toggle-track::after {
+.toggle-input:checked ~ .toggle-track::after {
   transform: translateX(16px);
 }
 
@@ -1323,6 +1323,12 @@ body {
   color: var(--accent);
   font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.mini-action:hover {
+  text-decoration: underline;
 }
 
 .assignment-body {
@@ -2586,6 +2592,16 @@ body {
 .page-num--disabled {
   opacity: 0.45;
   pointer-events: none;
+}
+
+.page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 32px;
+  color: var(--text-muted);
+  user-select: none;
 }
 
 /* Bold case-number cell on the assigned-cases table */

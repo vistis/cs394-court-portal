@@ -4,10 +4,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.UUID;
 import jakarta.validation.Valid;
+import java.util.List;
+import kh.edu.paragoniu.court_portal.cases.AssignPersonOption;
 import kh.edu.paragoniu.court_portal.cases.CaseCreationException;
 import kh.edu.paragoniu.court_portal.cases.CaseDetailNotFoundException;
 import kh.edu.paragoniu.court_portal.cases.CaseRow;
 import kh.edu.paragoniu.court_portal.cases.CaseService;
+import kh.edu.paragoniu.court_portal.greffier.GreffierService;
+import kh.edu.paragoniu.court_portal.legal.LawyerJudgeService;
 import kh.edu.paragoniu.court_portal.cases.CreateDispositionForm;
 import kh.edu.paragoniu.court_portal.cases.CreateCaseForm;
 import kh.edu.paragoniu.court_portal.cases.CreateDocketEntryForm;
@@ -31,6 +35,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -41,6 +46,8 @@ public class CaseController {
     private static final int DOCKET_PAGE_SIZE = 8;
 
     private final CaseService caseService;
+    private final LawyerJudgeService lawyerJudgeService;
+    private final GreffierService greffierService;
 
     @GetMapping("/cases/new")
     public String newCase(Model model) {
@@ -117,6 +124,124 @@ public class CaseController {
             model.addAttribute("activeNav", "cases");
             return "case-not-found";
         }
+    }
+
+    /** Judge suggestions for the quick-assign popup on the Case Detail page. */
+    @GetMapping("/cases/{caseId}/judge-search")
+    @ResponseBody
+    public List<AssignPersonOption> judgeSearch(
+        @PathVariable String caseId,
+        @RequestParam(required = false, name = "q") String query
+    ) {
+        try {
+            return lawyerJudgeService.searchAssignableJudgesForCase(
+                UUID.fromString(caseId),
+                query,
+                20
+            );
+        } catch (IllegalArgumentException ex) {
+            return List.of();
+        }
+    }
+
+    /** Quick-assign a judge to this case from the Case Detail page. */
+    @PostMapping("/cases/{caseId}/assign-judge")
+    public String assignJudge(
+        @PathVariable String caseId,
+        @RequestParam String judgeId,
+        @RequestParam(defaultValue = "true") boolean presiding,
+        Model model,
+        RedirectAttributes redirectAttributes,
+        HttpServletResponse response
+    ) {
+        UUID parsedCaseId;
+        UUID parsedJudgeId;
+        try {
+            parsedCaseId = UUID.fromString(caseId);
+            parsedJudgeId = UUID.fromString(judgeId);
+        } catch (IllegalArgumentException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        }
+
+        try {
+            String caseNumber = lawyerJudgeService.assignCaseToJudge(
+                parsedJudgeId,
+                parsedCaseId,
+                presiding
+            );
+            redirectAttributes.addFlashAttribute(
+                "successMessage",
+                "Judge assigned to case " + caseNumber + "."
+            );
+        } catch (CaseDetailNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        } catch (IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/cases/" + parsedCaseId;
+    }
+
+    /** Greffier suggestions for the quick-assign popup on the Case Detail page. */
+    @GetMapping("/cases/{caseId}/greffier-search")
+    @ResponseBody
+    public List<AssignPersonOption> greffierSearch(
+        @PathVariable String caseId,
+        @RequestParam(required = false, name = "q") String query
+    ) {
+        try {
+            return greffierService.searchAssignableGreffiersForCase(
+                UUID.fromString(caseId),
+                query,
+                20
+            );
+        } catch (IllegalArgumentException ex) {
+            return List.of();
+        }
+    }
+
+    /** Quick-assign a greffier to this case from the Case Detail page. */
+    @PostMapping("/cases/{caseId}/assign-greffier")
+    public String assignGreffier(
+        @PathVariable String caseId,
+        @RequestParam String greffierId,
+        Model model,
+        RedirectAttributes redirectAttributes,
+        HttpServletResponse response,
+        @AuthenticationPrincipal GreffierUserDetails user
+    ) {
+        UUID parsedCaseId;
+        UUID parsedGreffierId;
+        try {
+            parsedCaseId = UUID.fromString(caseId);
+            parsedGreffierId = UUID.fromString(greffierId);
+        } catch (IllegalArgumentException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        }
+
+        try {
+            String caseNumber = greffierService.assignCase(
+                parsedGreffierId,
+                parsedCaseId,
+                user == null ? null : user.getUserId()
+            );
+            redirectAttributes.addFlashAttribute(
+                "successMessage",
+                "Greffier assigned to case " + caseNumber + "."
+            );
+        } catch (CaseDetailNotFoundException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            model.addAttribute("activeNav", "cases");
+            return "case-not-found";
+        } catch (IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/cases/" + parsedCaseId;
     }
 
     @GetMapping("/cases/{caseId}/status")

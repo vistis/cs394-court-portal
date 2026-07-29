@@ -22,6 +22,8 @@ import kh.edu.paragoniu.court_portal.cases.DocketEntryRow;
 import kh.edu.paragoniu.court_portal.cases.DispositionTabView;
 import kh.edu.paragoniu.court_portal.cases.DispositionView;
 import kh.edu.paragoniu.court_portal.cases.FilterOption;
+import kh.edu.paragoniu.court_portal.greffier.GreffierService;
+import kh.edu.paragoniu.court_portal.legal.LawyerJudgeService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.data.domain.PageImpl;
@@ -36,6 +38,12 @@ class CaseControllerTest {
 
     @Mock
     private CaseService caseService;
+
+    @Mock
+    private LawyerJudgeService lawyerJudgeService;
+
+    @Mock
+    private GreffierService greffierService;
 
     @Test
     void caseDetailRendersExistingCaseForAuthorizedUser() throws Exception {
@@ -193,7 +201,9 @@ class CaseControllerTest {
 
     private MockMvc mockMvc() {
         return MockMvcBuilders
-            .standaloneSetup(new CaseController(caseService))
+            .standaloneSetup(
+                new CaseController(caseService, lawyerJudgeService, greffierService)
+            )
             .setSingleView(
                 new AbstractView() {
                     @Override
