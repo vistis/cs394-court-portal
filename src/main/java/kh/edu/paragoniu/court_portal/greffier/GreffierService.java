@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import kh.edu.paragoniu.court_portal.cases.AssignPersonOption;
 import kh.edu.paragoniu.court_portal.cases.CaseDetailNotFoundException;
 import kh.edu.paragoniu.court_shared.entity.Case;
 import kh.edu.paragoniu.court_shared.entity.CaseAssignment;
@@ -239,9 +240,78 @@ public class GreffierService {
      * list and the greffier list (its assigned-count column). Returns the case
      * number for the confirmation message.
      */
+    /**
+     * Greffier suggestions for the quick-assign popup on the Case Detail page —
+     * the reverse of {@link #searchAssignableCases}: given a case, find greffiers
+     * to assign. Greffiers already on the case are flagged (not hidden). Not
+     * cached — it changes per keystroke.
+     */
+    @Transactional(readOnly = true)
+    public List<AssignPersonOption> searchAssignableGreffiersForCase(
+        UUID caseId,
+        String query,
+        int limit
+    ) {
+        Set<UUID> assigned = new HashSet<>(
+            entityManager
+                .createQuery(
+                    "SELECT ca.greffierEntity.userId FROM CaseAssignment ca " +
+                    "WHERE ca.caseEntity.caseId = :cid",
+                    UUID.class
+                )
+                .setParameter("cid", caseId)
+                .getResultList()
+        );
+
+        List<String> conditions = new ArrayList<>();
+        conditions.add("ur.systemRole.name = :role");
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("role", GREFFIER_ROLE);
+
+        if (query != null && !query.isBlank()) {
+            conditions.add(
+                "(LOWER(u.firstName) LIKE :q OR LOWER(u.lastName) LIKE :q " +
+                "OR LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE :q)"
+            );
+            params.put("q", "%" + query.toLowerCase(Locale.ENGLISH).trim() + "%");
+        }
+
+        String whereClause = " WHERE " + String.join(" AND ", conditions);
+
+        TypedQuery<GreffierProjection> dataQuery = entityManager.createQuery(
+            "SELECT DISTINCT new kh.edu.paragoniu.court_portal.greffier.GreffierProjection(" +
+            "u.userId, u.firstName, u.lastName, u.email, ur.systemRole.name, 0L) " +
+            "FROM User u JOIN u.userRoles ur" +
+            whereClause +
+            " ORDER BY u.firstName, u.lastName",
+            GreffierProjection.class
+        );
+        params.forEach(dataQuery::setParameter);
+        dataQuery.setMaxResults(limit);
+
+        return dataQuery
+            .getResultList()
+            .stream()
+            .map(p -> {
+                String fullName = ((p.firstName() == null ? "" : p.firstName()) +
+                    " " +
+                    (p.lastName() == null ? "" : p.lastName())).trim();
+                return new AssignPersonOption(
+                    p.userId().toString(),
+                    fullName,
+                    p.email() == null || p.email().isBlank()
+                        ? prettyRole(p.roleName())
+                        : p.email(),
+                    assigned.contains(p.userId())
+                );
+            })
+            .toList();
+    }
+
     @Caching(evict = {
         @CacheEvict(value = "assignedCases", allEntries = true),
-        @CacheEvict(value = "greffierList", allEntries = true)
+        @CacheEvict(value = "greffierList", allEntries = true),
+        @CacheEvict(value = "caseDetail", key = "#caseId")
     })
     @Transactional
     public String assignCase(UUID greffierId, UUID caseId, UUID assignedById) {

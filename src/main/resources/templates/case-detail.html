@@ -27,6 +27,14 @@
           Case status updated successfully.
         </div>
 
+        <div
+          class="alert alert--error"
+          th:if="${errorMessage}"
+          th:text="${errorMessage}"
+        >
+          Something went wrong.
+        </div>
+
         <div class="breadcrumb">
           <a th:href="@{/cases}">Cases</a>
           <span>&gt;</span>
@@ -159,10 +167,12 @@
             <section class="assignment-card">
               <div class="assignment-card-head">
                 <h2 class="detail-panel-title">Assigned Judge</h2>
-                <span
+                <a
                   class="mini-action"
+                  href="#"
+                  data-assignjudge-open
                   sec:authorize="hasAuthority('CASE_ASSIGN')"
-                  >Assign</span
+                  >Assign</a
                 >
               </div>
               <div class="assignment-body">
@@ -196,10 +206,12 @@
             <section class="assignment-card">
               <div class="assignment-card-head">
                 <h2 class="detail-panel-title">Assigned Greffier</h2>
-                <span
+                <a
                   class="mini-action"
+                  href="#"
+                  data-assigngreffier-open
                   sec:authorize="hasAuthority('CASE_ASSIGN')"
-                  >Manage</span
+                  >Manage</a
                 >
               </div>
               <div class="assignment-body">
@@ -233,5 +245,278 @@
         </div>
       </main>
     </div>
+
+    <!-- ============ Quick-assign Judge to this case ============ -->
+    <div
+      class="modal-overlay"
+      id="assignJudgeModal"
+      sec:authorize="hasAuthority('CASE_ASSIGN')"
+      th:attr="data-search-url=@{/cases/{caseId}/judge-search(caseId=${caseDetail.caseId})}"
+    >
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignJudgeTitle">
+        <div class="modal-head">
+          <div>
+            <h2 class="modal-title" id="assignJudgeTitle">Assign Judge</h2>
+            <p class="modal-subtitle">
+              Case: <span th:text="${caseDetail.caseNumber}">CR-2026-0001</span>
+            </p>
+          </div>
+          <button type="button" class="modal-close" data-pj-close aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form
+          class="modal-body"
+          method="post"
+          th:action="@{/cases/{caseId}/assign-judge(caseId=${caseDetail.caseId})}"
+        >
+          <input type="hidden" name="judgeId" data-pj-personid />
+
+          <div class="form-field">
+            <label class="form-label" for="assignJudgeSearch"
+              >Search Judge by Name or License <span class="req">*</span></label
+            >
+            <div class="input-wrap table-search">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input
+                class="input"
+                type="text"
+                id="assignJudgeSearch"
+                data-pj-search
+                autocomplete="off"
+                placeholder="e.g., Vannak Chan or JUD-2026-0002"
+              />
+            </div>
+          </div>
+
+          <div class="assign-results" data-pj-results>
+            <p class="assign-hint">Start typing to find a judge…</p>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="assignJudgeRole"
+              >Assignment Role <span class="req">*</span></label
+            >
+            <select class="select" id="assignJudgeRole" name="presiding">
+              <option value="true" selected>Presiding Judge</option>
+              <option value="false">Associate Judge</option>
+            </select>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-outline" data-pj-close>Cancel</button>
+            <button type="submit" class="btn-primary" data-pj-submit disabled>
+              Confirm Assignment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ============ Quick-assign Greffier to this case ============ -->
+    <div
+      class="modal-overlay"
+      id="assignGreffierModal"
+      sec:authorize="hasAuthority('CASE_ASSIGN')"
+      th:attr="data-search-url=@{/cases/{caseId}/greffier-search(caseId=${caseDetail.caseId})}"
+    >
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignGreffierTitle">
+        <div class="modal-head">
+          <div>
+            <h2 class="modal-title" id="assignGreffierTitle">Assign Greffier</h2>
+            <p class="modal-subtitle">
+              Case: <span th:text="${caseDetail.caseNumber}">CR-2026-0001</span>
+            </p>
+          </div>
+          <button type="button" class="modal-close" data-pg-close aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <form
+          class="modal-body"
+          method="post"
+          th:action="@{/cases/{caseId}/assign-greffier(caseId=${caseDetail.caseId})}"
+        >
+          <input type="hidden" name="greffierId" data-pg-personid />
+
+          <div class="form-field">
+            <label class="form-label" for="assignGreffierSearch"
+              >Search Greffier by Name <span class="req">*</span></label
+            >
+            <div class="input-wrap table-search">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input
+                class="input"
+                type="text"
+                id="assignGreffierSearch"
+                data-pg-search
+                autocomplete="off"
+                placeholder="Search by name..."
+              />
+            </div>
+          </div>
+
+          <div class="assign-results" data-pg-results>
+            <p class="assign-hint">Start typing to find a greffier…</p>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-outline" data-pg-close>Cancel</button>
+            <button type="submit" class="btn-primary" data-pg-submit disabled>
+              Confirm Assignment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script th:inline="none">
+      (function () {
+        // Reusable wiring for a "search a person, pick one, assign to this case"
+        // popup. Both the judge and greffier modals share this logic.
+        function wire(opts) {
+          const overlay = document.getElementById(opts.overlayId);
+          if (!overlay) return;
+          const searchUrl = overlay.getAttribute("data-search-url");
+          const idInput = overlay.querySelector("[" + opts.idAttr + "]");
+          const searchInput = overlay.querySelector("[" + opts.searchAttr + "]");
+          const resultsBox = overlay.querySelector("[" + opts.resultsAttr + "]");
+          const submitBtn = overlay.querySelector("[" + opts.submitAttr + "]");
+          const closeEls = overlay.querySelectorAll("[" + opts.closeAttr + "]");
+          let timer = null;
+
+          function open() {
+            idInput.value = "";
+            searchInput.value = "";
+            submitBtn.disabled = true;
+            resultsBox.innerHTML =
+              '<p class="assign-hint">' + opts.hint + "</p>";
+            overlay.classList.add("is-open");
+            setTimeout(function () {
+              searchInput.focus();
+            }, 30);
+            load("");
+          }
+          function close() {
+            overlay.classList.remove("is-open");
+          }
+
+          function select(item, person) {
+            resultsBox
+              .querySelectorAll(".assign-item--selected")
+              .forEach(function (el) {
+                el.classList.remove("assign-item--selected");
+              });
+            item.classList.add("assign-item--selected");
+            idInput.value = person.id;
+            submitBtn.disabled = false;
+          }
+
+          function render(list) {
+            resultsBox.innerHTML = "";
+            if (!list || list.length === 0) {
+              resultsBox.innerHTML =
+                '<p class="assign-hint">No matches found.</p>';
+              return;
+            }
+            list.forEach(function (person) {
+              const item = document.createElement("div");
+              item.className =
+                "assign-item" +
+                (person.alreadyAssigned ? " assign-item--disabled" : "");
+
+              const main = document.createElement("div");
+              main.className = "assign-item-main";
+              const name = document.createElement("span");
+              name.className = "assign-item-number";
+              name.textContent = person.name;
+              const sub = document.createElement("span");
+              sub.className = "assign-item-title";
+              sub.textContent = person.subtitle;
+              main.appendChild(name);
+              main.appendChild(sub);
+
+              const right = document.createElement("div");
+              if (person.alreadyAssigned) {
+                const tag = document.createElement("span");
+                tag.className = "assign-item-tag";
+                tag.textContent = "Assigned";
+                right.appendChild(tag);
+              }
+
+              item.appendChild(main);
+              item.appendChild(right);
+
+              if (!person.alreadyAssigned) {
+                item.addEventListener("click", function () {
+                  select(item, person);
+                });
+              }
+              resultsBox.appendChild(item);
+            });
+          }
+
+          function load(q) {
+            fetch(searchUrl + "?q=" + encodeURIComponent(q))
+              .then(function (r) {
+                return r.json();
+              })
+              .then(render)
+              .catch(function () {
+                resultsBox.innerHTML =
+                  '<p class="assign-hint">Could not load results.</p>';
+              });
+          }
+
+          document.querySelectorAll("[" + opts.openAttr + "]").forEach(function (btn) {
+            btn.addEventListener("click", function (e) {
+              e.preventDefault();
+              open();
+            });
+          });
+          closeEls.forEach(function (b) {
+            b.addEventListener("click", close);
+          });
+          overlay.addEventListener("mousedown", function (e) {
+            if (e.target === overlay) close();
+          });
+          document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") close();
+          });
+          searchInput.addEventListener("input", function () {
+            const q = searchInput.value;
+            idInput.value = "";
+            submitBtn.disabled = true;
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+              load(q);
+            }, 200);
+          });
+        }
+
+        wire({
+          overlayId: "assignJudgeModal",
+          openAttr: "data-assignjudge-open",
+          idAttr: "data-pj-personid",
+          searchAttr: "data-pj-search",
+          resultsAttr: "data-pj-results",
+          submitAttr: "data-pj-submit",
+          closeAttr: "data-pj-close",
+          hint: "Start typing to find a judge…",
+        });
+        wire({
+          overlayId: "assignGreffierModal",
+          openAttr: "data-assigngreffier-open",
+          idAttr: "data-pg-personid",
+          searchAttr: "data-pg-search",
+          resultsAttr: "data-pg-results",
+          submitAttr: "data-pg-submit",
+          closeAttr: "data-pg-close",
+          hint: "Start typing to find a greffier…",
+        });
+      })();
+    </script>
   </body>
 </html>
