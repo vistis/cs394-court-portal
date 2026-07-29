@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <!-- ===================== PARTICIPANT HEADER CARD ===================== -->
+    <section th:fragment="header(profile)" class="detail-hero">
+      <div class="detail-hero-main participant-hero-main">
+        <div
+          class="avatar avatar--lg"
+          th:if="${profile.profileImageUrl == null}"
+          th:text="${profile.initials}"
+        >
+          MH
+        </div>
+        <img
+          class="avatar avatar--lg"
+          th:if="${profile.profileImageUrl != null}"
+          th:src="${profile.profileImageUrl}"
+          th:alt="${profile.name}"
+        />
+
+        <div>
+          <div class="participant-hero-name-row">
+            <h1 class="participant-hero-name" th:text="${profile.name}">
+              Michael Henderson
+            </h1>
+            <span
+              class="badge"
+              th:classappend="${profile.badgeClass}"
+              th:text="${profile.partyType}"
+              >Individual</span
+            >
+          </div>
+
+          <div class="participant-hero-contact">
+            <a
+              class="contact-link"
+              th:if="${profile.primaryEmail != 'N/A'}"
+              th:href="|mailto:${profile.primaryEmail}|"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span th:text="${profile.primaryEmail}">m.henderson@email.com</span>
+            </a>
+            <span class="contact-item" th:if="${profile.primaryPhone != 'N/A'}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span th:text="${profile.primaryPhone}">555-0128</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PARTICIPANT TABS ===================== -->
+    <nav
+      th:fragment="tabs(profile, active)"
+      class="detail-tabs"
+      aria-label="Participant sections"
+    >
+      <a
+        class="detail-tab"
+        th:classappend="${active == 'profile'} ? 'detail-tab--active' : ''"
+        th:href="@{/participants/{id}(id=${profile.participantId})}"
+        >Profile</a
+      >
+      <a
+        class="detail-tab"
+        th:classappend="${active == 'cases'} ? 'detail-tab--active' : ''"
+        th:href="@{/participants/{id}/cases(id=${profile.participantId})}"
+        >Involved Cases</a
+      >
+      <a
+        class="detail-tab"
+        th:classappend="${active == 'documents'} ? 'detail-tab--active' : ''"
+        th:href="@{/participants/{id}/documents(id=${profile.participantId})}"
+        >Documents</a
+      >
+    </nav>
+  </body>
+</html>

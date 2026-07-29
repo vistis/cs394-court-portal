@@ -5,6 +5,7 @@ import java.util.UUID;
 
 /** Raw JPQL projection for a hearing row, before display formatting. */
 public record HearingProjection(
+    UUID hearingId,
     UUID caseId,
     String caseNumber,
     String hearingType,

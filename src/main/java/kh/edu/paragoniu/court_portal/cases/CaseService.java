@@ -33,6 +33,7 @@ import kh.edu.paragoniu.court_shared.repository.CaseRepository;
 import kh.edu.paragoniu.court_shared.repository.AppealRepository;
 import kh.edu.paragoniu.court_shared.repository.DispositionOutcomeRepository;
 import kh.edu.paragoniu.court_shared.repository.DispositionRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -91,6 +92,7 @@ public class CaseService {
         this.mongoTemplate = mongoTemplate;
     }
 
+    @Cacheable("caseList")
     @Transactional(readOnly = true)
     public Page<CaseRow> search(
         String query,
@@ -164,6 +166,7 @@ public class CaseService {
         return new PageImpl<>(rows, pageable, total);
     }
 
+    @Cacheable(value = "refData", key = "'caseClassifications'")
     @Transactional(readOnly = true)
     public List<FilterOption> findClassificationOptions() {
         return entityManager
@@ -181,6 +184,7 @@ public class CaseService {
             .getResultList();
     }
 
+    @Cacheable(value = "refData", key = "'caseStatuses'")
     @Transactional(readOnly = true)
     public List<FilterOption> findStatusOptions() {
         return entityManager
@@ -198,6 +202,7 @@ public class CaseService {
             .getResultList();
     }
 
+    @Cacheable(value = "refData", key = "'dispositionOutcomes'")
     @Transactional(readOnly = true)
     public List<FilterOption> findDispositionOutcomeOptions() {
         return dispositionOutcomeRepository
@@ -417,6 +422,7 @@ public class CaseService {
     @org.springframework.cache.annotation.Caching(
         put = { @org.springframework.cache.annotation.CachePut(value = "caseDetail", key = "#caseId") },
         evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "caseList", allEntries = true),
             @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true),
             @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
         }
@@ -487,7 +493,12 @@ public class CaseService {
     }
 
     @Transactional
-    @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true)
+    @org.springframework.cache.annotation.Caching(
+        evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "caseList", allEntries = true),
+            @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true)
+        }
+    )
     public UUID createCase(CreateCaseForm form, UUID performedById) {
         CaseClassification classification = classificationRepository
             .findById(form.getClassificationId())
@@ -546,6 +557,7 @@ public class CaseService {
     @Transactional
     @org.springframework.cache.annotation.Caching(
         evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "caseList", allEntries = true),
             @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true),
             @org.springframework.cache.annotation.CacheEvict(value = "caseDetail", key = "#caseId"),
             @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
@@ -616,6 +628,7 @@ public class CaseService {
     @Transactional
     @org.springframework.cache.annotation.Caching(
         evict = {
+            @org.springframework.cache.annotation.CacheEvict(value = "caseList", allEntries = true),
             @org.springframework.cache.annotation.CacheEvict(value = "publicCases", allEntries = true),
             @org.springframework.cache.annotation.CacheEvict(value = "caseDetail", key = "#originalCaseId"),
             @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#originalCaseId")

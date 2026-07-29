@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="|${profile.name} — Court Panel|">Lawyer Profile</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+  </head>
+  <body class="app">
+    <div th:replace="~{fragments/layout :: sidebar('lawyers')}"></div>
+
+    <div class="app-main">
+      <div th:replace="~{fragments/layout :: topbar}"></div>
+
+      <main class="content content--detail">
+        <div class="breadcrumb">
+          <a th:href="@{/lawyers-judges(tab='lawyer')}">Lawyers &amp; Judges</a>
+          <span>&gt;</span>
+          <span>Profile</span>
+        </div>
+
+        <div
+          class="alert alert--success"
+          th:if="${successMessage}"
+          th:text="${successMessage}"
+        >
+          Case assigned successfully.
+        </div>
+        <div
+          class="alert alert--error"
+          th:if="${errorMessage}"
+          th:text="${errorMessage}"
+        >
+          Could not assign case.
+        </div>
+
+        <!-- Header card -->
+        <section class="detail-hero">
+          <div class="detail-hero-main">
+            <div
+              class="avatar avatar--lg"
+              th:if="${profile.profileImageUrl == null}"
+              th:text="${profile.initials}"
+            >
+              ER
+            </div>
+            <img
+              class="avatar avatar--lg"
+              th:if="${profile.profileImageUrl != null}"
+              th:src="${profile.profileImageUrl}"
+              th:alt="${profile.name}"
+            />
+            <div>
+              <h1 class="detail-title" th:text="${profile.name}">
+                Elena Rodriguez
+              </h1>
+            </div>
+          </div>
+          <a
+            th:href="@{/lawyers-judges/lawyers/{id}/edit(id=${profile.lawyerId})}"
+            class="btn-outline btn-icon"
+            title="Edit profile"
+            sec:authorize="hasAuthority('CASE_ASSIGN')"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            <span>Edit Profile</span>
+          </a>
+        </section>
+
+        <!-- Lawyer Information -->
+        <section class="detail-panel">
+          <h2 class="detail-panel-title">Lawyer Information</h2>
+          <dl class="detail-facts">
+            <div>
+              <dt>First Name</dt>
+              <dd th:text="${profile.firstName}">Elena</dd>
+            </div>
+            <div>
+              <dt>Last Name</dt>
+              <dd th:text="${profile.lastName}">Rodriguez</dd>
+            </div>
+            <div>
+              <dt>Bar Number</dt>
+              <dd th:text="${profile.barNumber}">NY-784920</dd>
+            </div>
+            <div>
+              <dt>Firm Name</dt>
+              <dd th:text="${profile.firmOffice}">Rodriguez &amp; Partners Law</dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- Involved Cases -->
+        <section class="detail-panel">
+          <div class="panel-head">
+            <h2 class="detail-panel-title">Involved Cases</h2>
+            <button
+              type="button"
+              class="panel-action"
+              data-lassign-open
+              th:attr="data-lawyer-id=${profile.lawyerId},data-lawyer-name=${profile.name}"
+              sec:authorize="hasAuthority('CASE_ASSIGN')"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              Assign to New Case
+            </button>
+          </div>
+
+          <div class="involved-list">
+            <a
+              th:each="row : ${involvedCases}"
+              class="assign-item involved-row"
+              th:href="@{/cases/{caseId}(caseId=${row.caseId})}"
+            >
+              <div class="assign-item-main">
+                <span class="assign-item-number" th:text="${row.caseNumber}"
+                  >CR-2026-0881</span
+                >
+                <span class="assign-item-title">
+                  <span th:text="${row.title}">State vs. Henderson</span>
+                  <span class="involved-sep">·</span>
+                  <span th:text="${row.representing}">Counsel for Henderson</span>
+                </span>
+              </div>
+              <div class="involved-row-right">
+                <span
+                  class="badge"
+                  th:classappend="${row.badgeClass}"
+                  th:text="${row.status}"
+                  >Open</span
+                >
+                <svg class="involved-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </div>
+            </a>
+            <p
+              class="assign-hint"
+              th:if="${#lists.isEmpty(involvedCases)}"
+            >
+              This lawyer is not involved in any cases yet.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div th:replace="~{fragments/assign-modals :: lawyerAssign('profile')}"></div>
+  </body>
+</html>

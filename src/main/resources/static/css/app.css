@@ -157,6 +157,60 @@ body {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-strong);
+  object-fit: cover;
+}
+
+.avatar--lg {
+  width: 64px;
+  height: 64px;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.participant-hero-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.participant-hero-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.participant-hero-name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.participant-hero-contact {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.contact-link,
+.contact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.contact-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.contact-link:hover {
+  text-decoration: underline;
 }
 
 .logout-form {
@@ -685,6 +739,19 @@ body {
   white-space: nowrap;
 }
 
+.table-actions--center {
+  justify-content: center;
+}
+
+.data-table th.table-actions-header {
+  text-align: center;
+}
+
+.data-table th.text-center,
+.data-table td.text-center {
+  text-align: center;
+}
+
 .table-actions a {
   color: var(--accent);
   font-weight: 700;
@@ -1078,6 +1145,162 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* Narrower, centered detail column so cards read as proportioned, not stretched */
+.content--narrow {
+  max-width: 920px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Hearing Details header sits on the plain page background (no card) */
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.detail-header-main {
+  min-width: 0;
+}
+
+/* Compact filled action button used in the Hearing Details header */
+.btn-reschedule {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 18px;
+  background: #000;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-reschedule:hover {
+  background: #1a1a1a;
+}
+
+/* ===================== Modal ===================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 64px 20px;
+  background: rgba(15, 23, 42, 0.45);
+  overflow-y: auto;
+}
+
+.modal-overlay.is-open {
+  display: flex;
+}
+
+.modal {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.modal-close {
+  display: inline-flex;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: var(--text-strong);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+}
+
+.modal-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #eff4fb;
+  border: 1px solid #d6e3f3;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1e40af;
+}
+
+.modal-info svg {
+  flex: none;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* Hearing Details subtitle (case reference line under the title) */
+.detail-subtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* Facts grid variants used by the Hearing Details card */
+.detail-facts--plain {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.detail-facts--3col {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 720px) {
+  .detail-facts--3col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A bordered table sitting inside a detail panel (e.g. Continuance History) */
+.table-card--flush {
+  margin-top: 18px;
+}
+
 .detail-aside {
   display: flex;
   flex-direction: column;
@@ -1439,6 +1662,10 @@ body {
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .segment + .segment {
@@ -1448,6 +1675,23 @@ body {
 .segment--active {
   background: var(--text-strong);
   color: #fff;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.field-group-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-strong);
 }
 
 .participant-option-search .input {
@@ -1522,6 +1766,58 @@ body {
 .combobox-empty {
   padding: 12px;
   color: var(--text-muted);
+  font-size: 13px;
+}
+
+.toolbar--inline {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.toolbar--inline .field--search {
+  flex: 1 1 auto;
+}
+
+.filter-dropdown {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.filter-toggle {
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.filter-dropdown-menu {
+  position: absolute;
+  z-index: 70;
+  top: calc(100% + 4px);
+  right: 0;
+  display: none;
+  width: 220px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.14);
+}
+
+.filter-dropdown--open .filter-dropdown-menu {
+  display: block;
+}
+
+.filter-dropdown-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.btn-secondary--sm {
+  height: 32px;
+  padding: 0 16px;
   font-size: 13px;
 }
 
@@ -2169,4 +2465,539 @@ body {
 .content--form {
   margin-left: auto;
   margin-right: auto;
+}
+
+/* ===================== Greffier Management ===================== */
+/* In-card search toolbar */
+.table-toolbar {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  margin: 0;
+}
+
+.table-search {
+  max-width: 320px;
+}
+
+/* Leave room for the search icon so it doesn't overlap the placeholder */
+.table-search .input {
+  padding-left: 40px;
+}
+
+/* Name cell: avatar + name */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.person-name {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+/* Assigned-cases count pill */
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+/* Small table action buttons */
+.btn-table {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text-strong);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-table:hover {
+  background: var(--surface);
+}
+
+.btn-table + .btn-table {
+  margin-left: 8px;
+}
+
+.col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Numbered pagination */
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text-strong);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.page-num:hover {
+  background: var(--surface);
+}
+
+.page-num--active {
+  background: var(--nav-dark);
+  border-color: var(--nav-dark);
+  color: #fff;
+}
+
+.page-num--active:hover {
+  background: var(--nav-dark);
+}
+
+.page-chevron {
+  color: var(--text);
+}
+
+.page-num--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Bold case-number cell on the assigned-cases table */
+.cell-strong {
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/* Back button in a card footer sits left; pagination (if any) sits right */
+.btn-back {
+  padding: 8px 20px;
+}
+
+/* ===================== System Settings ===================== */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.settings-card {
+  position: relative;
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px 28px;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease,
+    transform 0.12s ease;
+}
+
+.settings-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 6px 18px rgba(19, 27, 46, 0.08);
+  transform: translateY(-2px);
+}
+
+.settings-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  color: var(--text-strong);
+  margin-bottom: 18px;
+}
+
+.settings-card-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.settings-card-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+  max-width: 46ch;
+}
+
+.settings-card-arrow {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  color: var(--text-muted);
+  transition: color 0.12s ease, transform 0.12s ease;
+}
+
+.settings-card:hover .settings-card-arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+
+/* ---- Settings taxonomy management pages ---- */
+.tax-add {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tax-add-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.tax-add-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.tax-add-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.tax-add-form .form-input {
+  width: 100%;
+}
+
+.tax-add-form .btn-primary {
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.tax-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+}
+
+.tax-del-form {
+  margin: 0;
+  display: inline;
+}
+
+.tax-del--active {
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.tax-del--active:hover {
+  background: #fee2e2;
+}
+
+.tax-del--locked {
+  color: var(--border);
+  cursor: not-allowed;
+}
+
+.tax-footnote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 2px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.tax-footnote svg {
+  flex: none;
+}
+
+/* ---- Register New Lawyer form ---- */
+.form-card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-strong);
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.form-optional {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.form-actions--end {
+  justify-content: flex-end;
+}
+
+/* Drag-and-drop upload zone */
+.file-drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 28px 20px;
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  text-align: center;
+  cursor: pointer;
+}
+
+.file-drop--over {
+  border-color: var(--accent);
+  background: #eef2fb;
+}
+
+.file-drop-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-drop-icon {
+  color: var(--text-muted);
+}
+
+.file-drop-text {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.file-drop-link {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.file-drop-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+
+.file-drop-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.file-drop-name:not(:empty) {
+  margin-top: 4px;
+}
+
+@media (max-width: 860px) {
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- Assign Case modal ---- */
+.modal-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.assign-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.assign-hint {
+  margin: 0;
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.assign-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.assign-item:hover {
+  background: var(--surface);
+}
+
+.assign-item--selected,
+.assign-item--selected:hover {
+  background: #eef2fb;
+  border-color: var(--accent);
+}
+
+.assign-item--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.assign-item--disabled:hover {
+  background: none;
+}
+
+.assign-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.assign-item-number {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.assign-item-title {
+  font-size: 13px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assign-item-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--border-soft);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ---- Lawyer/Judge profile ---- */
+.btn-icon {
+  gap: 8px;
+}
+
+.hero-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.upload-filename {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-grid--spaced {
+  margin-top: 22px;
+}
+
+/* Involved Cases panel */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.panel-action:hover {
+  text-decoration: underline;
+}
+
+.involved-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 20px;
+}
+
+.involved-row {
+  border: 1px solid var(--border-soft);
+  text-decoration: none;
+}
+
+.involved-row:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.involved-row-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.involved-arrow {
+  color: var(--text-muted);
+}
+
+.involved-sep {
+  margin: 0 4px;
+  color: var(--text-muted);
 }
