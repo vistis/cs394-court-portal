@@ -588,11 +588,11 @@ body {
   transition: transform 0.15s ease;
 }
 
-.toggle-input:checked + .toggle-track {
+.toggle-input:checked ~ .toggle-track {
   background: var(--accent);
 }
 
-.toggle-input:checked + .toggle-track::after {
+.toggle-input:checked ~ .toggle-track::after {
   transform: translateX(16px);
 }
 

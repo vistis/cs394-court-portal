@@ -15,6 +15,7 @@ import kh.edu.paragoniu.court_shared.repository.ParticipantRepository;
 import kh.edu.paragoniu.court_shared.repository.ParticipantRoleRepository;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +53,10 @@ public class ParticipantService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(
+        cacheNames = "caseParticipants",
+        key = "#caseId + '|' + #query + '|' + #roleId"
+    )
     public List<CaseParticipantRow> findCaseParticipants(
         UUID caseId,
         String query,
@@ -125,7 +130,6 @@ public class ParticipantService {
     }
 
     @Transactional
-    @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
     public void addParticipant(UUID caseId, AddCaseParticipantForm form) {
         Case caseEntity = caseRepository
             .findById(caseId)
@@ -172,11 +176,10 @@ public class ParticipantService {
         caseParticipant.setParticipantEntity(participant);
         caseParticipant.setParticipantRole(role);
         caseParticipantRepository.save(caseParticipant);
-        scheduleParticipantsDirectoryCacheEvictionAfterCommit();
+        scheduleCaseParticipantCacheEvictionAfterCommit(caseId);
     }
 
     @Transactional
-    @org.springframework.cache.annotation.CacheEvict(value = "publicCaseDetail", key = "#caseId")
     public void removeParticipant(UUID caseId, UUID participantId) {
         ensureCaseExists(caseId);
         CaseParticipantId id = new CaseParticipantId(caseId, participantId);
@@ -187,27 +190,41 @@ public class ParticipantService {
             );
         }
         caseParticipantRepository.deleteById(id);
-        scheduleParticipantsDirectoryCacheEvictionAfterCommit();
+        scheduleCaseParticipantCacheEvictionAfterCommit(caseId);
     }
 
     /**
-     * Evicts participants/ParticipantDirectoryService's cache (both the
-     * directory's involved-cases count and the profile's Involved Cases tab)
-     * after this transaction commits, since case_participants rows changed
-     * here are what that cache's data is built from. Registered manually
-     * rather than via @CacheEvict for the same reason documented on
-     * ParticipantDirectoryService.scheduleCacheEvictionAfterCommit: stacking
-     * @CacheEvict with @Transactional on one method has no ordering guarantee
-     * and can evict before commit.
+     * Evicts every cache that case_participants changes affect, after this
+     * transaction commits: this case's own caseParticipants list, the public
+     * case-detail view, and participants/ParticipantDirectoryService's cache
+     * (its involved-cases count and the profile's Involved Cases tab).
+     * Registered manually rather than via @CacheEvict: stacking @CacheEvict
+     * with @Transactional on one method has no ordering guarantee and can
+     * evict before commit, letting a concurrent read repopulate the cache
+     * with stale (pre-commit) data.
      */
-    private void scheduleParticipantsDirectoryCacheEvictionAfterCommit() {
+    private void scheduleCaseParticipantCacheEvictionAfterCommit(UUID caseId) {
         TransactionSynchronizationManager.registerSynchronization(
             new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    Cache cache = cacheManager.getCache(PARTICIPANTS_DIRECTORY_CACHE);
-                    if (cache != null) {
-                        cache.clear();
+                    Cache caseParticipantsCache = cacheManager.getCache(
+                        "caseParticipants"
+                    );
+                    if (caseParticipantsCache != null) {
+                        caseParticipantsCache.clear();
+                    }
+                    Cache publicCaseDetailCache = cacheManager.getCache(
+                        "publicCaseDetail"
+                    );
+                    if (publicCaseDetailCache != null) {
+                        publicCaseDetailCache.evict(caseId);
+                    }
+                    Cache directoryCache = cacheManager.getCache(
+                        PARTICIPANTS_DIRECTORY_CACHE
+                    );
+                    if (directoryCache != null) {
+                        directoryCache.clear();
                     }
                 }
             }
