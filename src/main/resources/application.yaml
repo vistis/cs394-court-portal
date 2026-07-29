@@ -42,11 +42,11 @@ spring:
       hibernate:
         dialect: ${SQL_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
 
-  data:
-    mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/court}
-      auto-index-creation: true
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/court}
+    auto-index-creation: true
 
+  data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
