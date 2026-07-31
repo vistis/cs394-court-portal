@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,11 @@ public class TaxonomyService {
             .toList();
     }
 
+    // Adding/removing a taxonomy value changes the classification/status/
+    // hearing-type/outcome reference lists cached under "refData" (case filters,
+    // create-case dropdowns, hearing-type filters). Evict them so the new value
+    // shows up immediately instead of after the 10-minute TTL.
+    @CacheEvict(value = "refData", allEntries = true)
     @Transactional
     public void add(TaxonomyKind kind, String rawName) {
         String name = rawName == null ? "" : rawName.trim();
@@ -76,6 +82,7 @@ public class TaxonomyService {
             .executeUpdate();
     }
 
+    @CacheEvict(value = "refData", allEntries = true)
     @Transactional
     public void delete(TaxonomyKind kind, int id) {
         Number usage = (Number) entityManager
