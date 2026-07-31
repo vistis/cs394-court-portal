@@ -21,6 +21,7 @@ import kh.edu.paragoniu.court_shared.repository.CourtroomRepository;
 import kh.edu.paragoniu.court_shared.repository.HearingRepository;
 import kh.edu.paragoniu.court_shared.repository.HearingTypeRepository;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -102,6 +103,7 @@ public class HearingService {
             .toList();
     }
 
+    @Cacheable(value = "refData", key = "'hearingTypeFilters'")
     @Transactional(readOnly = true)
     public List<FilterOption> findHearingTypeOptions() {
         return hearingTypeRepository
@@ -111,6 +113,7 @@ public class HearingService {
             .toList();
     }
 
+    @Cacheable(value = "refData", key = "'courtroomOptions'")
     @Transactional(readOnly = true)
     public List<FilterOption> findCourtroomOptions() {
         return courtroomRepository

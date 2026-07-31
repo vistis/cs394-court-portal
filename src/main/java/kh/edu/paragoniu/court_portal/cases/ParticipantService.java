@@ -1,9 +1,12 @@
 package kh.edu.paragoniu.court_portal.cases;
 
+import jakarta.persistence.EntityManager;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import kh.edu.paragoniu.court_shared.entity.Case;
 import kh.edu.paragoniu.court_shared.entity.CaseParticipant;
 import kh.edu.paragoniu.court_shared.entity.CaseParticipantId;
@@ -15,6 +18,7 @@ import kh.edu.paragoniu.court_shared.repository.ParticipantRepository;
 import kh.edu.paragoniu.court_shared.repository.ParticipantRoleRepository;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,19 +40,25 @@ public class ParticipantService {
     private final ParticipantRepository participantRepository;
     private final ParticipantRoleRepository participantRoleRepository;
     private final CacheManager cacheManager;
+    private final EntityManager entityManager;
+
+    /** Cap on the participant-picker list; it is a searchable modal, not a full dump. */
+    private static final int PARTICIPANT_OPTION_LIMIT = 50;
 
     public ParticipantService(
         CaseRepository caseRepository,
         CaseParticipantRepository caseParticipantRepository,
         ParticipantRepository participantRepository,
         ParticipantRoleRepository participantRoleRepository,
-        CacheManager cacheManager
+        CacheManager cacheManager,
+        EntityManager entityManager
     ) {
         this.caseRepository = caseRepository;
         this.caseParticipantRepository = caseParticipantRepository;
         this.participantRepository = participantRepository;
         this.participantRoleRepository = participantRoleRepository;
         this.cacheManager = cacheManager;
+        this.entityManager = entityManager;
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +86,7 @@ public class ParticipantService {
             .toList();
     }
 
+    @Cacheable(value = "refData", key = "'participantRoleOptions'")
     @Transactional(readOnly = true)
     public List<FilterOption> findRoleOptions() {
         return participantRoleRepository
@@ -94,26 +105,39 @@ public class ParticipantService {
         ensureCaseExists(caseId);
         String normalizedPartyType = validatePartyType(partyType);
         String normalizedQuery = normalize(query);
-        List<UUID> assignedIds = caseParticipantRepository
+        Set<UUID> assignedIds = caseParticipantRepository
             .findByIdCaseId(caseId)
             .stream()
             .map(row -> row.getParticipantEntity().getParticipantId())
-            .toList();
+            .collect(Collectors.toSet());
 
-        return participantRepository
-            .findAll(Sort.by("name"))
+        // Filter by party type (and name, when searching) in the database rather
+        // than loading every participant row into memory. The already-assigned
+        // parties are excluded afterwards (that set is small per case), so pull a
+        // few extra rows to still fill the capped list.
+        boolean hasQuery = !normalizedQuery.isBlank();
+        String jpql =
+            "SELECT p FROM Participant p WHERE LOWER(p.partyType) = LOWER(:partyType)";
+        if (hasQuery) {
+            jpql += " AND LOWER(p.name) LIKE :q";
+        }
+        jpql += " ORDER BY p.name";
+
+        var typedQuery = entityManager
+            .createQuery(jpql, Participant.class)
+            .setParameter("partyType", normalizedPartyType);
+        if (hasQuery) {
+            typedQuery.setParameter("q", "%" + normalizedQuery + "%");
+        }
+        typedQuery.setMaxResults(PARTICIPANT_OPTION_LIMIT + assignedIds.size());
+
+        return typedQuery
+            .getResultList()
             .stream()
             .filter(participant ->
-                normalizedPartyType.equalsIgnoreCase(participant.getPartyType())
+                !assignedIds.contains(participant.getParticipantId())
             )
-            .filter(participant ->
-                normalizedQuery.isBlank() ||
-                participant
-                    .getName()
-                    .toLowerCase(Locale.ENGLISH)
-                    .contains(normalizedQuery)
-            )
-            .filter(participant -> !assignedIds.contains(participant.getParticipantId()))
+            .limit(PARTICIPANT_OPTION_LIMIT)
             .map(participant ->
                 new ParticipantOption(
                     participant.getParticipantId(),

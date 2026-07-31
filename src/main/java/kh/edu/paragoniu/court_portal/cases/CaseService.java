@@ -253,10 +253,16 @@ public class CaseService {
         ensureCaseExists(caseId);
 
         Set<String> types = new LinkedHashSet<>(MANUAL_DOCKET_ACTIVITY_TYPES);
+        // Ask Mongo for the distinct activityType values on this case rather than
+        // pulling back every docket document just to collect them.
         mongoTemplate
-            .find(Query.query(Criteria.where("caseId").is(caseId)), Docket.class)
+            .findDistinct(
+                Query.query(Criteria.where("caseId").is(caseId)),
+                "activityType",
+                Docket.class,
+                String.class
+            )
             .stream()
-            .map(Docket::getActivityType)
             .filter(type -> type != null && !type.isBlank())
             .forEach(types::add);
 
@@ -314,6 +320,7 @@ public class CaseService {
         mongoTemplate.save(docket);
     }
 
+    @Cacheable(value = "refData", key = "'activeJudgeOptions'")
     @Transactional(readOnly = true)
     public List<JudgeOption> findActiveJudgeOptions() {
         return entityManager

@@ -669,7 +669,12 @@ public class LawyerJudgeService {
      * Registers a new judge. Bar number (license) must be unique. Evicts the
      * judge list so the directory shows the new entry.
      */
-    @CacheEvict(value = "judgeList", allEntries = true)
+    // Also evicts refData: the active-judge option lists (case create form,
+    // document assignment) are cached there and must reflect the new judge.
+    @Caching(evict = {
+        @CacheEvict(value = "judgeList", allEntries = true),
+        @CacheEvict(value = "refData", allEntries = true)
+    })
     @Transactional
     public UUID createJudge(CreateJudgeForm form) {
         String firstName = trim(form.getFirstName());
@@ -747,7 +752,8 @@ public class LawyerJudgeService {
      */
     @Caching(evict = {
         @CacheEvict(value = "judgeList", allEntries = true),
-        @CacheEvict(value = "judgeDetail", allEntries = true)
+        @CacheEvict(value = "judgeDetail", allEntries = true),
+        @CacheEvict(value = "refData", allEntries = true)
     })
     @Transactional
     public void updateJudge(UUID judgeId, CreateJudgeForm form) {
